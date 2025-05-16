@@ -15,60 +15,60 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Authentication routes
-Route::group(['prefix' => 'auth', 'namespace' => 'App\Http\Controllers\API'], function () {
-    Route::post('/login', 'AuthController@login');
-    Route::post('/register', 'AuthController@register');
-    Route::post('/forgot-password', 'AuthController@forgotPassword');
-    Route::post('/reset-password', 'AuthController@resetPassword');
+Route::prefix('auth')->group(function () {
+    Route::post('/login', [\App\Http\Controllers\API\AuthController::class, 'login']);
+    Route::post('/register', [\App\Http\Controllers\API\AuthController::class, 'register']);
+    Route::post('/forgot-password', [\App\Http\Controllers\API\AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [\App\Http\Controllers\API\AuthController::class, 'resetPassword']);
 
     // Protected auth routes
-    Route::group(['middleware' => ['auth:sanctum']], function () {
-        Route::post('/logout', 'AuthController@logout');
-        Route::post('/change-password', 'AuthController@changePassword');
-        Route::post('/accept-terms', 'AuthController@acceptTerms');
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/logout', [\App\Http\Controllers\API\AuthController::class, 'logout']);
+        Route::post('/change-password', [\App\Http\Controllers\API\AuthController::class, 'changePassword']);
+        Route::post('/accept-terms', [\App\Http\Controllers\API\AuthController::class, 'acceptTerms']);
     });
 });
 
 // Protected API routes
-Route::group(['middleware' => ['auth:sanctum'], 'namespace' => 'App\Http\Controllers\API'], function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     // User profile
     Route::get('/user', function (Request $request) {
         return $request->user()->load('roles');
     });
-    Route::put('/user/profile', 'UserController@updateProfile');
+    Route::put('/user/profile', [\App\Http\Controllers\API\UserController::class, 'updateProfile']);
 
     // User Management
-    Route::apiResource('users', 'UserController');
+    Route::apiResource('users', \App\Http\Controllers\API\UserController::class);
 
     // Role Management
-    Route::apiResource('roles', 'RoleController');
-    Route::post('/roles/{role}/permissions', 'RoleController@syncPermissions');
+    Route::apiResource('roles', \App\Http\Controllers\API\RoleController::class);
+    Route::post('/roles/{role}/permissions', [\App\Http\Controllers\API\RoleController::class, 'syncPermissions']);
 
     // Permissions
-    Route::apiResource('permissions', 'PermissionController')->only(['index', 'show']);
-    Route::get('/permissions/by-module', 'PermissionController@getByModule');
+    Route::apiResource('permissions', \App\Http\Controllers\API\PermissionController::class)->only(['index', 'show']);
+    Route::get('/permissions/by-module', [\App\Http\Controllers\API\PermissionController::class, 'getByModule']);
 
     // Terms and Conditions
-    Route::apiResource('terms', 'TermAndConditionController');
-    Route::get('/terms/active', 'TermAndConditionController@getActive');
-    Route::get('/terms/user-acceptance', 'TermAndConditionController@getUserAcceptance');
+    Route::apiResource('terms', \App\Http\Controllers\API\TermAndConditionController::class);
+    Route::get('/terms/active', [\App\Http\Controllers\API\TermAndConditionController::class, 'getActive']);
+    Route::get('/terms/user-acceptance', [\App\Http\Controllers\API\TermAndConditionController::class, 'getUserAcceptance']);
 
     // Notifications
-    Route::apiResource('notifications', 'NotificationController');
-    Route::post('/notifications/{notification}/mark-read', 'NotificationController@markAsRead');
-    Route::post('/notifications/mark-all-read', 'NotificationController@markAllAsRead');
-    Route::get('/notifications/unread-count', 'NotificationController@getUnreadCount');
+    Route::apiResource('notifications', \App\Http\Controllers\API\NotificationController::class);
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\API\NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\API\NotificationController::class, 'markAllAsRead']);
+    Route::get('/notifications/unread-count', [\App\Http\Controllers\API\NotificationController::class, 'getUnreadCount']);
 
     // Email Templates
-    Route::apiResource('email-templates', 'EmailTemplateController');
+    Route::apiResource('email-templates', \App\Http\Controllers\API\EmailTemplateController::class);
 
     // Content Management
-    Route::apiResource('content', 'ContentManagementController');
-    Route::get('/content/by-slug/{slug}', 'ContentManagementController@getBySlug');
-    Route::get('/content/by-type/{type}', 'ContentManagementController@getByType');
+    Route::apiResource('content', \App\Http\Controllers\API\ContentManagementController::class);
+    Route::get('/content/by-slug/{slug}', [\App\Http\Controllers\API\ContentManagementController::class, 'getBySlug']);
+    Route::get('/content/by-type/{type}', [\App\Http\Controllers\API\ContentManagementController::class, 'getByType']);
 
     // Menu Management
-    Route::apiResource('menu-items', 'MenuItemController');
-    Route::get('/menu/structure', 'MenuItemController@getMenuStructure');
-    Route::post('/menu-items/reorder', 'MenuItemController@reorderItems');
+    Route::apiResource('menu-items', \App\Http\Controllers\API\MenuItemController::class);
+    Route::get('/menu/structure', [\App\Http\Controllers\API\MenuItemController::class, 'getMenuStructure']);
+    Route::post('/menu-items/reorder', [\App\Http\Controllers\API\MenuItemController::class, 'reorderItems']);
 });

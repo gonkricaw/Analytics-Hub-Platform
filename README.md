@@ -1,61 +1,203 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Indonet Analytics Hub Platform
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+<img src="https://img.shields.io/badge/Laravel-10.x-red" alt="Laravel Version">
+<img src="https://img.shields.io/badge/PHP-8.1+-blue" alt="PHP Version">
+<img src="https://img.shields.io/badge/License-MIT-green" alt="License">
 </p>
 
-## About Laravel
+## Project Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The Indonet Analytics Hub Platform is a role-based web application with a Laravel backend that provides user management, role-based access control, terms & conditions management, menu/content management, system notifications, and email template functionality.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Backend Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Authentication System
+- JWT/Sanctum authentication
+- User registration and login
+- Password reset and change functionality
+- Terms & conditions acceptance tracking
 
-## Learning Laravel
+### User Management
+- Complete CRUD operations for user accounts
+- Role assignment and management
+- User profile management
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Role-Based Access Control
+- Role management with permission assignment
+- Fine-grained permissions by module
+- Permission checking in all controllers
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Content Management
+- Support for multiple content types
+- CRUD operations for content
+- Publishing workflow with draft/published states
+- Meta information for SEO
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Menu Management
+- Hierarchical menu structure
+- Permission-based menu visibility
+- Drag-and-drop reordering capability
 
-## Laravel Sponsors
+### Terms and Conditions
+- Version tracking for terms
+- Active terms management
+- User acceptance recording
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Notification System
+- System-wide and user-specific notifications
+- Read/unread status tracking
+- Expiration management
 
-### Premium Partners
+### Email Templates
+- Customizable email templates
+- Token-based replacement for variables
+- HTML and plain text versions
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Database Structure
 
-## Contributing
+The platform uses the following core tables:
+- users
+- roles
+- permissions
+- role_user (pivot)
+- permission_role (pivot)
+- terms_and_conditions
+- system_notifications
+- email_templates
+- content_management
+- menu_items
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Getting Started
 
-## Code of Conduct
+### Prerequisites
+- PHP 8.1 or higher
+- MySQL/MariaDB
+- Composer
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Installation
 
-## Security Vulnerabilities
+1. Clone the repository
+```
+git clone https://github.com/your-org/indonet-analytics-hub.git
+cd indonet-analytics-hub
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+2. Install dependencies
+```
+composer install
+```
+
+3. Copy .env.example to .env and configure your database
+```
+cp .env.example .env
+```
+
+4. Generate application key
+```
+php artisan key:generate
+```
+
+5. Run migrations and seed the database
+```
+php artisan migrate --seed
+```
+
+6. Start the development server
+```
+php artisan serve
+```
+
+### Default Users
+
+After seeding, the following users will be available:
+
+1. Administrator:
+   - Email: admin@indonet.com
+   - Password: Admin@123
+
+2. Regular User:
+   - Email: user@indonet.com
+   - Password: User@123
+
+## API Documentation
+
+The platform offers a comprehensive RESTful API:
+
+### Authentication
+- POST /api/auth/login
+- POST /api/auth/register
+- POST /api/auth/forgot-password
+- POST /api/auth/reset-password
+- POST /api/auth/logout
+- POST /api/auth/change-password
+- POST /api/auth/accept-terms
+
+### User Management
+- GET /api/users
+- POST /api/users
+- GET /api/users/{id}
+- PUT /api/users/{id}
+- DELETE /api/users/{id}
+- PUT /api/user/profile
+
+### Role Management
+- GET /api/roles
+- POST /api/roles
+- GET /api/roles/{id}
+- PUT /api/roles/{id}
+- DELETE /api/roles/{id}
+- POST /api/roles/{role}/permissions
+
+### Permissions
+- GET /api/permissions
+- GET /api/permissions/{id}
+- GET /api/permissions/by-module
+
+### Terms and Conditions
+- GET /api/terms
+- POST /api/terms
+- GET /api/terms/{id}
+- PUT /api/terms/{id}
+- DELETE /api/terms/{id}
+- GET /api/terms/active
+- GET /api/terms/user-acceptance
+
+### Notifications
+- GET /api/notifications
+- POST /api/notifications
+- GET /api/notifications/{id}
+- PUT /api/notifications/{id}
+- DELETE /api/notifications/{id}
+- POST /api/notifications/{notification}/mark-read
+- POST /api/notifications/mark-all-read
+- GET /api/notifications/unread-count
+
+### Email Templates
+- GET /api/email-templates
+- POST /api/email-templates
+- GET /api/email-templates/{id}
+- PUT /api/email-templates/{id}
+- DELETE /api/email-templates/{id}
+
+### Content Management
+- GET /api/content
+- POST /api/content
+- GET /api/content/{id}
+- PUT /api/content/{id}
+- DELETE /api/content/{id}
+- GET /api/content/by-slug/{slug}
+- GET /api/content/by-type/{type}
+
+### Menu Management
+- GET /api/menu-items
+- POST /api/menu-items
+- GET /api/menu-items/{id}
+- PUT /api/menu-items/{id}
+- DELETE /api/menu-items/{id}
+- GET /api/menu/structure
+- POST /api/menu-items/reorder
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The Indonet Analytics Hub Platform is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
