@@ -1,0 +1,321 @@
+<!-- resources/js/views/ProfileView.vue -->
+<template>
+  <v-container>
+    <v-row>
+      <v-col cols="12">
+        <h1 class="text-h4 mb-6">My Profile</h1>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col cols="12" md="6">
+        <v-card class="mb-4">
+          <v-card-title class="primary lighten-1 white--text">
+            <v-icon left color="white">mdi-account-edit</v-icon>
+            Profile Information
+          </v-card-title>
+
+          <v-card-text class="pa-4">
+            <v-form ref="profileForm" v-model="isProfileFormValid" @submit.prevent="updateProfile">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="profileData.name"
+                    label="Name"
+                    :rules="nameRules"
+                    required
+                    variant="outlined"
+                  ></v-text-field>
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="profileData.email"
+                    label="Email"
+                    :rules="emailRules"
+                    disabled
+                    variant="outlined"
+                  ></v-text-field>
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="profileData.phone"
+                    label="Phone Number"
+                    variant="outlined"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+
+              <div class="d-flex justify-end">
+                <v-btn
+                  color="primary"
+                  type="submit"
+                  :loading="isUpdatingProfile"
+                  :disabled="!isProfileFormValid || isUpdatingProfile"
+                >
+                  Save Changes
+                </v-btn>
+              </div>
+            </v-form>
+          </v-card-text>
+        </v-card>
+
+        <v-card>
+          <v-card-title class="primary lighten-1 white--text">
+            <v-icon left color="white">mdi-lock</v-icon>
+            Change Password
+          </v-card-title>
+
+          <v-card-text class="pa-4">
+            <v-form ref="passwordForm" v-model="isPasswordFormValid" @submit.prevent="changePassword">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="passwordData.current_password"
+                    label="Current Password"
+                    :rules="currentPasswordRules"
+                    :type="showCurrentPassword ? 'text' : 'password'"
+                    :append-inner-icon="showCurrentPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                    required
+                    variant="outlined"
+                    @click:append-inner="showCurrentPassword = !showCurrentPassword"
+                  ></v-text-field>
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="passwordData.new_password"
+                    label="New Password"
+                    :rules="passwordRules"
+                    :type="showNewPassword ? 'text' : 'password'"
+                    :append-inner-icon="showNewPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                    required
+                    variant="outlined"
+                    @click:append-inner="showNewPassword = !showNewPassword"
+                  ></v-text-field>
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="passwordData.new_password_confirmation"
+                    label="Confirm New Password"
+                    :rules="[...passwordRules, passwordMatchRule]"
+                    :type="showConfirmPassword ? 'text' : 'password'"
+                    :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                    required
+                    variant="outlined"
+                    @click:append-inner="showConfirmPassword = !showConfirmPassword"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+
+              <div class="d-flex justify-end">
+                <v-btn
+                  color="primary"
+                  type="submit"
+                  :loading="isChangingPassword"
+                  :disabled="!isPasswordFormValid || isChangingPassword"
+                >
+                  Update Password
+                </v-btn>
+              </div>
+            </v-form>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="6">
+        <v-card>
+          <v-card-title class="primary lighten-1 white--text">
+            <v-icon left color="white">mdi-account-circle</v-icon>
+            Profile Picture
+          </v-card-title>
+
+          <v-card-text class="pa-4">
+            <avatar-upload />
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-snackbar v-model="showSnackbar" :color="snackbarColor" timeout="3000">
+      {{ snackbarText }}
+      <template v-slot:actions>
+        <v-btn variant="text" @click="showSnackbar = false">Close</v-btn>
+      </template>
+    </v-snackbar>
+  </v-container>
+</template>
+
+<script>
+import { ref, computed, onMounted } from 'vue';
+import { useAuthStore } from '../stores/authStore';
+import AvatarUpload from '../components/AvatarUpload.vue';
+import axios from 'axios';
+
+export default {
+  name: 'ProfileView',
+  components: {
+    AvatarUpload
+  },
+  setup() {
+    const authStore = useAuthStore();
+    const user = computed(() => authStore.user);
+
+    // Profile form data and validation
+    const profileForm = ref(null);
+    const isProfileFormValid = ref(false);
+    const isUpdatingProfile = ref(false);
+    const profileData = ref({
+      name: '',
+      email: '',
+      phone: ''
+    });
+
+    // Password form data and validation
+    const passwordForm = ref(null);
+    const isPasswordFormValid = ref(false);
+    const isChangingPassword = ref(false);
+    const passwordData = ref({
+      current_password: '',
+      new_password: '',
+      new_password_confirmation: ''
+    });
+
+    // Password visibility toggles
+    const showCurrentPassword = ref(false);
+    const showNewPassword = ref(false);
+    const showConfirmPassword = ref(false);
+
+    // Snackbar
+    const showSnackbar = ref(false);
+    const snackbarText = ref('');
+    const snackbarColor = ref('success');
+
+    // Validation rules
+    const nameRules = [
+      v => !!v || 'Name is required',
+      v => (v && v.length >= 3) || 'Name must be at least 3 characters'
+    ];
+
+    const emailRules = [
+      v => !!v || 'Email is required',
+      v => /.+@.+\..+/.test(v) || 'Email must be valid'
+    ];
+
+    const currentPasswordRules = [
+      v => !!v || 'Current password is required'
+    ];
+
+    const passwordRules = [
+      v => !!v || 'Password is required',
+      v => (v && v.length >= 8) || 'Password must be at least 8 characters',
+      v => /[A-Z]/.test(v) || 'Password must contain at least one uppercase letter',
+      v => /[a-z]/.test(v) || 'Password must contain at least one lowercase letter',
+      v => /[0-9]/.test(v) || 'Password must contain at least one number'
+    ];
+
+    const passwordMatchRule = v => v === passwordData.value.new_password || 'Password confirmation must match new password';
+
+    // Initialize form data
+    onMounted(() => {
+      if (user.value) {
+        profileData.value = {
+          name: user.value.name || '',
+          email: user.value.email || '',
+          phone: user.value.phone || ''
+        };
+      }
+    });
+
+    // Update profile information
+    const updateProfile = async () => {
+      if (!isProfileFormValid.value) return;
+
+      isUpdatingProfile.value = true;
+
+      try {
+        const response = await axios.put('/api/user/profile', profileData.value);
+
+        // Update auth store user data
+        if (authStore.user) {
+          authStore.user = response.data.user;
+        }
+
+        // Show success message
+        snackbarText.value = 'Profile updated successfully';
+        snackbarColor.value = 'success';
+        showSnackbar.value = true;
+      } catch (error) {
+        console.error('Error updating profile:', error);
+
+        // Show error message
+        snackbarText.value = error.response?.data?.message || 'Failed to update profile';
+        snackbarColor.value = 'error';
+        showSnackbar.value = true;
+      } finally {
+        isUpdatingProfile.value = false;
+      }
+    };
+
+    // Change password
+    const changePassword = async () => {
+      if (!isPasswordFormValid.value) return;
+
+      isChangingPassword.value = true;
+
+      try {
+        await authStore.changePassword(passwordData.value);
+
+        // Reset form
+        passwordData.value = {
+          current_password: '',
+          new_password: '',
+          new_password_confirmation: ''
+        };
+        passwordForm.value.reset();
+
+        // Show success message
+        snackbarText.value = 'Password changed successfully';
+        snackbarColor.value = 'success';
+        showSnackbar.value = true;
+      } catch (error) {
+        console.error('Error changing password:', error);
+
+        // Show error message
+        snackbarText.value = error.message || 'Failed to change password';
+        snackbarColor.value = 'error';
+        showSnackbar.value = true;
+      } finally {
+        isChangingPassword.value = false;
+      }
+    };
+
+    return {
+      user,
+      profileForm,
+      isProfileFormValid,
+      isUpdatingProfile,
+      profileData,
+      passwordForm,
+      isPasswordFormValid,
+      isChangingPassword,
+      passwordData,
+      showCurrentPassword,
+      showNewPassword,
+      showConfirmPassword,
+      showSnackbar,
+      snackbarText,
+      snackbarColor,
+      nameRules,
+      emailRules,
+      currentPasswordRules,
+      passwordRules,
+      passwordMatchRule,
+      updateProfile,
+      changePassword
+    };
+  }
+};
+</script>

@@ -17,7 +17,14 @@ const routes = [
     component: () => import('@pages/Login.vue'),
     meta: { requiresAuth: false }
   },
-  // Protected routes will be added in future phases
+  // Protected routes
+  {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('@/views/ProfileView.vue'),
+    meta: { requiresAuth: true }
+  },
+  // More protected routes will be added in future phases
 ];
 
 const router = createRouter({
@@ -32,6 +39,20 @@ const router = createRouter({
   }
 });
 
-// Navigation guards will be implemented in future phases
+// Navigation guards
+router.beforeEach((to, from, next) => {
+  // Import auth store directly to avoid circular dependency
+  const authStore = window.pinia?.state?.value?.auth;
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+  if (requiresAuth && (!authStore || !authStore.isAuthenticated)) {
+    next({ name: 'login', query: { redirect: to.fullPath } });
+  } else if (to.name === 'login' && authStore && authStore.isAuthenticated) {
+    // Redirect to home if trying to access login while authenticated
+    next({ name: 'home' });
+  } else {
+    next();
+  }
+});
 
 export default router;

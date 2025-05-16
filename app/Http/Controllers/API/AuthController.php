@@ -4,11 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\LoginAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -18,24 +21,37 @@ class AuthController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login(Request $request)
+    public function login(\App\Http\Requests\LoginRequest $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
-                'password' => 'required|string',
+
+            // Check if IP is blocked due to too many attempts
+            $ipAddress = $request->ip();
+            $email = $request->email;
+
+            $loginAttempt = LoginAttempt::firstOrNew([
+                'email' => $email,
+                'ip_address' => $ipAddress
             ]);
 
-            if ($validator->fails()) {
+            // Check if IP is blocked
+            if ($loginAttempt->exists && $loginAttempt->isBlocked()) {
                 return response()->json([
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
+                    'message' => 'Too many failed login attempts. Please try again later.',
+                    'blocked_until' => $loginAttempt->blocked_until
+                ], 429);
             }
 
             $credentials = $request->only('email', 'password');
 
             if (!Auth::attempt($credentials)) {
+                // Increment login attempts for this IP and email
+                if ($loginAttempt->exists) {
+                    $loginAttempt->incrementAttempts();
+                } else {
+                    $loginAttempt->fill(['attempts' => 1, 'last_attempt_at' => now()])->save();
+                }
+
                 throw ValidationException::withMessages([
                     'email' => ['The provided credentials are incorrect.'],
                 ]);
@@ -48,6 +64,11 @@ class AuthController extends Controller
                 return response()->json([
                     'message' => 'Your account is inactive. Please contact the administrator.'
                 ], 403);
+            }
+
+            // Reset login attempts for this IP and email combination
+            if ($loginAttempt->exists) {
+                $loginAttempt->resetAttempts();
             }
 
             // Update login timestamp and IP
@@ -157,20 +178,9 @@ class AuthController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function changePassword(Request $request)
+    public function changePassword(\App\Http\Requests\ChangePasswordRequest $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'current_password' => 'required|string',
-                'password' => 'required|string|min:8|confirmed|different:current_password',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
 
             $user = $request->user();
 
@@ -198,35 +208,83 @@ class AuthController extends Controller
     }
 
     /**
-     * Send a reset password link to the user
+     * Change password for first time users (e.g. after invitation)
+     * Unlike regular changePassword, this doesn't require the current password
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function forgotPassword(Request $request)
+    public function changePasswordFirstTime(\App\Http\Requests\ChangePasswordFirstTimeRequest $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email|exists:users,email',
-            ]);
 
-            if ($validator->fails()) {
+            $user = $request->user();
+
+            // Check if the user is required to change their password
+            if (!$user->force_password_change) {
                 return response()->json([
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
+                    'message' => 'Password change not required. Use the standard change password endpoint.'
+                ], 400);
             }
 
-            // In a real implementation, you would send a password reset email here
-            // For now, we'll just return a success message
+            // Update password
+            $user->password = Hash::make($request->password);
+            $user->force_password_change = false;
+            $user->save();
+
+            return response()->json([
+                'message' => 'Password successfully changed'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Password change failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Send a reset password link to the user
+     *
+     * @param \App\Http\Requests\ForgotPasswordRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function forgotPassword(\App\Http\Requests\ForgotPasswordRequest $request)
+    {
+        try {
+            // Get user by email
+            $user = User::where('email', $request->email)->first();
+
+            if (!$user) {
+                // We don't want to reveal if an email exists or not due to security concerns
+                return response()->json([
+                    'message' => 'Password reset link has been sent to your email if it exists in our system'
+                ], 200);
+            }
+
+            // Generate reset token
+            $token = Password::createToken($user);
+
+            // Send email with reset link
+            try {
+                \Mail::to($user->email)->send(new \App\Mail\PasswordReset($user->email, $token));
+            } catch (\Exception $mailException) {
+                \Log::error('Failed to send password reset email: ' . $mailException->getMessage());
+
+                // Return generic message to avoid revealing email sending errors
+                return response()->json([
+                    'message' => 'Error sending email, please try again later'
+                ], 500);
+            }
 
             return response()->json([
                 'message' => 'Password reset link has been sent to your email'
             ], 200);
         } catch (\Exception $e) {
+            \Log::error('Password reset error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to send password reset link',
-                'error' => $e->getMessage()
+                'message' => 'Failed to process your request',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -237,13 +295,36 @@ class AuthController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function resetPassword(Request $request)
+    public function resetPassword(\App\Http\Requests\ResetPasswordRequest $request)
     {
-        // This would be implemented in a real application with token verification
-        // For now, just return a placeholder response
-        return response()->json([
-            'message' => 'Password reset endpoint not fully implemented'
-        ], 501);
+        try {
+
+            $status = Password::reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+                function (User $user, string $password) {
+                    $user->forceFill([
+                        'password' => Hash::make($password),
+                        'force_password_change' => false,
+                        'remember_token' => Str::random(60),
+                    ])->save();
+                }
+            );
+
+            if ($status === Password::PASSWORD_RESET) {
+                return response()->json([
+                    'message' => 'Password has been successfully reset'
+                ], 200);
+            }
+
+            return response()->json([
+                'message' => 'Invalid or expired token',
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to reset password',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -289,6 +370,65 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to record terms acceptance',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get the authenticated User
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function me(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            // Load roles and permissions
+            $user->load('roles.permissions');
+
+            // Check if user needs to accept latest terms
+            $needsToAcceptTerms = $this->needsToAcceptTerms($user);
+
+            return response()->json([
+                'user' => $user,
+                'force_password_change' => $user->force_password_change,
+                'needs_to_accept_terms' => $needsToAcceptTerms
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to retrieve user information',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Refresh the user's authentication token
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refresh(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            // Revoke the current token
+            $request->user()->currentAccessToken()->delete();
+
+            // Generate a new token
+            $token = $user->createToken('auth-token')->plainTextToken;
+
+            return response()->json([
+                'token' => $token,
+                'message' => 'Token refreshed successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to refresh token',
                 'error' => $e->getMessage()
             ], 500);
         }

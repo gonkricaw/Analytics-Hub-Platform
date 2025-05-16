@@ -279,4 +279,61 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Invite a new user to the system
+     * This creates a user with a temporary password and force_password_change flag
+     *
+     * @param \App\Http\Requests\UserInviteRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function invite(\App\Http\Requests\UserInviteRequest $request)
+    {
+        try {
+            // Generate a secure random password
+            $tempPassword = \Illuminate\Support\Str::random(12);
+
+            // Create the user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($tempPassword),
+                'department' => $request->department ?? null,
+                'position' => $request->position ?? null,
+                'is_active' => true,
+                'force_password_change' => true, // Force user to change password on first login
+            ]);
+
+            // Assign roles if provided, otherwise assign default user role
+            if ($request->has('roles') && is_array($request->roles)) {
+                $user->roles()->sync($request->roles);
+            } else {
+                // Assign default role (user)
+                $defaultRole = Role::where('name', 'user')->first();
+                if ($defaultRole) {
+                    $user->roles()->attach($defaultRole->id);
+                }
+            }
+
+            // Send invitation email with temporary password
+            try {
+                \Mail::to($user->email)->send(new \App\Mail\UserInvitation($user, $tempPassword));
+            } catch (\Exception $mailException) {
+                // Log the error but continue with the invitation process
+                \Log::error('Failed to send invitation email: ' . $mailException->getMessage());
+            }
+
+            return response()->json([
+                'message' => 'User invitation sent successfully',
+                'user' => $user->load('roles'),
+                // Only return the temp password in development environment
+                'temp_password' => config('app.env') !== 'production' ? $tempPassword : null
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to invite user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -24,7 +24,10 @@ Route::prefix('auth')->group(function () {
     // Protected auth routes
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/logout', [\App\Http\Controllers\API\AuthController::class, 'logout']);
+        Route::get('/me', [\App\Http\Controllers\API\AuthController::class, 'me']);
+        Route::post('/refresh', [\App\Http\Controllers\API\AuthController::class, 'refresh']);
         Route::post('/change-password', [\App\Http\Controllers\API\AuthController::class, 'changePassword']);
+        Route::post('/change-password-first-time', [\App\Http\Controllers\API\AuthController::class, 'changePasswordFirstTime']);
         Route::post('/accept-terms', [\App\Http\Controllers\API\AuthController::class, 'acceptTerms']);
     });
 });
@@ -36,9 +39,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user()->load('roles');
     });
     Route::put('/user/profile', [\App\Http\Controllers\API\UserController::class, 'updateProfile']);
+    Route::post('/user/avatar', [\App\Http\Controllers\API\ProfileController::class, 'updateAvatar']);
+    Route::get('/user/avatar', [\App\Http\Controllers\API\ProfileController::class, 'getAvatar']);
+    Route::post('/user/avatar/remove', [\App\Http\Controllers\API\ProfileController::class, 'removeAvatar']);
 
     // User Management
     Route::apiResource('users', \App\Http\Controllers\API\UserController::class);
+    Route::post('/users/invite', [\App\Http\Controllers\API\UserController::class, 'invite']);
 
     // Role Management
     Route::apiResource('roles', \App\Http\Controllers\API\RoleController::class);
@@ -71,4 +78,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('menu-items', \App\Http\Controllers\API\MenuItemController::class);
     Route::get('/menu/structure', [\App\Http\Controllers\API\MenuItemController::class, 'getMenuStructure']);
     Route::post('/menu-items/reorder', [\App\Http\Controllers\API\MenuItemController::class, 'reorderItems']);
+
+    // Role & Permission Management
+    Route::prefix('roles-permissions')->group(function () {
+        Route::get('/permissions', [\App\Http\Controllers\API\RolePermissionController::class, 'getAllPermissions']);
+        Route::get('/permissions/by-module', [\App\Http\Controllers\API\RolePermissionController::class, 'getPermissionsByModule']);
+        Route::post('/roles/{roleId}/permissions', [\App\Http\Controllers\API\RolePermissionController::class, 'assignPermissionsToRole']);
+    });
+
+    // Audit Logs (Admin only)
+    Route::middleware(['permission:audit-log-view'])->prefix('admin')->group(function () {
+        Route::get('/audit-logs', [\App\Http\Controllers\API\Admin\AuditLogController::class, 'index']);
+        Route::get('/audit-logs/{id}', [\App\Http\Controllers\API\Admin\AuditLogController::class, 'show']);
+        Route::get('/audit-logs-actions', [\App\Http\Controllers\API\Admin\AuditLogController::class, 'getActions']);
+        Route::get('/audit-logs-model-types', [\App\Http\Controllers\API\Admin\AuditLogController::class, 'getModelTypes']);
+    });
 });

@@ -21,28 +21,20 @@ class DatabaseSeeder extends Seeder
         // Then roles seeder (which assigns permissions to roles)
         $this->call(RoleSeeder::class);
 
-        // Create admin user
-        $adminUser = User::firstOrCreate(
-            ['email' => 'powerbi@indonet.id'],
-            [
-                'name' => 'System Administrator',
-                'email' => 'powerbi@indonet.id',
-                'password' => Hash::make('Admin@123'),
-                'email_verified_at' => now()
-            ]
-        );
+        // Then run admin user seeder
+        $this->call(AdminUserSeeder::class);
 
-        // Assign admin role to admin user
-        $adminRole = Role::where('name', 'admin')->first();
-        $adminUser->roles()->sync([$adminRole->id]);
-
-        // Create regular user
+        // Create regular user for testing
         $user = User::firstOrCreate(
             ['email' => 'user@indonet.com'],
             [
                 'name' => 'Regular User',
                 'email' => 'user@indonet.com',
                 'password' => Hash::make('User@123'),
+                'position' => 'Staff',
+                'department' => 'Operations',
+                'is_active' => true,
+                'force_password_change' => false,
                 'email_verified_at' => now()
             ]
         );

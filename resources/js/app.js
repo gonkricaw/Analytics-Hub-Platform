@@ -7,6 +7,7 @@ import PerfectScrollbar from 'vue3-perfect-scrollbar';
 import apexchartsPlugin from './plugins/apexcharts';
 import quillPlugin from './plugins/quill';
 import gsapPlugin from './plugins/gsap';
+import inactivityDetector from './plugins/inactivity-detector';
 import 'vue3-perfect-scrollbar/dist/vue3-perfect-scrollbar.css';
 import App from './App.vue';
 
@@ -22,6 +23,7 @@ app.use(PerfectScrollbar);
 app.use(apexchartsPlugin);
 app.use(quillPlugin);
 app.use(gsapPlugin);
+app.use(inactivityDetector);
 
 // Global error handler
 app.config.errorHandler = (err, vm, info) => {
