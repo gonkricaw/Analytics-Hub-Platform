@@ -24,7 +24,7 @@ return new class extends Migration
         // Create a pivot table to track which users have accepted which terms
         Schema::create('term_user', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('term_and_condition_id')->constrained()->onDelete('cascade');
+            $table->foreignId('term_and_condition_id')->constrained('terms_and_conditions')->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamp('accepted_at');
             $table->string('ip_address')->nullable();

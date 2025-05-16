@@ -21,4 +21,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-/.context-ref
+.context-ref/Logic.md
+.context-ref/Plan.md
+.context-ref/Task.md

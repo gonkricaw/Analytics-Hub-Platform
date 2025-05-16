@@ -2,6 +2,7 @@ import './bootstrap';
 import { createApp } from 'vue';
 import vuetify from './plugins/vuetify';
 import router from './router';
+import pinia from './plugins/pinia';
 import PerfectScrollbar from 'vue3-perfect-scrollbar';
 import apexchartsPlugin from './plugins/apexcharts';
 import quillPlugin from './plugins/quill';
@@ -16,6 +17,7 @@ const app = createApp(App);
 // Register global plugins
 app.use(vuetify);
 app.use(router);
+app.use(pinia);
 app.use(PerfectScrollbar);
 app.use(apexchartsPlugin);
 app.use(quillPlugin);
