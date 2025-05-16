@@ -1,0 +1,45 @@
+// resources/scss/_mixins.scss
+// Mixins should be defined here
+
+// Flexbox mixins
+@mixin flex($direction: row, $justify: center, $align: center) {
+    display: flex;
+    flex-direction: $direction;
+    justify-content: $justify;
+    align-items: $align;
+}
+
+// Responsive mixins
+@mixin respond-to($breakpoint) {
+    @if $breakpoint == xs {
+        @media (max-width: 600px) { @content; }
+    } @else if $breakpoint == sm {
+        @media (max-width: 960px) { @content; }
+    } @else if $breakpoint == md {
+        @media (max-width: 1264px) { @content; }
+    } @else if $breakpoint == lg {
+        @media (max-width: 1904px) { @content; }
+    } @else if $breakpoint == xl {
+        @media (min-width: 1905px) { @content; }
+    }
+}
+
+// Animation mixins
+@mixin transition($property: all, $duration: 0.3s, $timing: ease) {
+    transition: $property $duration $timing;
+}
+
+// Shadow mixins
+@mixin shadow($level: 1) {
+    @if $level == 1 {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    } @else if $level == 2 {
+        box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    } @else if $level == 3 {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    } @else if $level == 4 {
+        box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    } @else if $level == 5 {
+        box-shadow: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+    }
+}
