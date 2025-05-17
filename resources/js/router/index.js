@@ -62,6 +62,37 @@ const routes = [
     component: () => import('@/views/NotificationListView.vue'),
     meta: { requiresAuth: true, title: 'Notifications' }
   },
+  // Admin routes
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('@/views/admin/UserManagementView.vue'),
+    meta: { requiresAuth: true, requiresPermission: 'user-view', title: 'User Management' }
+  },
+  {
+    path: '/admin/roles',
+    name: 'admin-roles',
+    component: () => import('@/views/admin/RoleManagementView.vue'),
+    meta: { requiresAuth: true, requiresPermission: 'role-view', title: 'Role Management' }
+  },
+  {
+    path: '/admin/system-configurations',
+    name: 'admin-system-configurations',
+    component: () => import('@/views/admin/SystemConfigurationView.vue'),
+    meta: { requiresAuth: true, requiresPermission: 'system-config-view', title: 'System Configuration' }
+  },  {
+    path: '/admin/email-templates',
+    name: 'admin-email-templates',
+    component: () => import('@/views/admin/EmailTemplateView.vue'),
+    meta: { requiresAuth: true, requiresPermission: 'email-template-view', title: 'Email Templates' }
+  },
+  {
+    path: '/admin/audit-logs',
+    name: 'admin-audit-logs',
+    component: () => import('@/views/admin/AuditLogView.vue'),
+    meta: { requiresAuth: true, requiresPermission: 'audit-log-view', title: 'Audit Logs' }
+  },
+
   // Development routes
   {
     path: '/dev/component-showcase',
@@ -92,6 +123,7 @@ router.beforeEach((to, from, next) => {
   // Import auth store directly to avoid circular dependency
   const authStore = window.pinia?.state?.value?.auth;
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiredPermission = to.matched.find(record => record.meta.requiresPermission)?.meta.requiresPermission;
   const isDevelopmentRoute = to.matched.some(record => record.meta.development);
 
   // Check if development routes should be accessible
@@ -102,12 +134,32 @@ router.beforeEach((to, from, next) => {
 
   if (requiresAuth && (!authStore || !authStore.isAuthenticated)) {
     next({ name: 'login', query: { redirect: to.fullPath } });
-  } else if (to.name === 'login' && authStore && authStore.isAuthenticated) {
+    return;
+  }
+
+  if (to.name === 'login' && authStore && authStore.isAuthenticated) {
     // Redirect to home if trying to access login while authenticated
     next({ name: 'home' });
-  } else {
-    next();
+    return;
   }
+
+  // Check for permission requirements
+  if (requiredPermission && authStore) {
+    const user = authStore.user;
+    const hasPermission = user && (
+      // Check if user has the required permission directly or through roles
+      user.permissions?.includes(requiredPermission) ||
+      user.roles?.some(role => role.permissions?.includes(requiredPermission))
+    );
+
+    if (!hasPermission) {
+      // Redirect to home or show unauthorized page if user doesn't have permission
+      next({ name: 'home' });
+      return;
+    }
+  }
+
+  next();
 });
 
 export default router;
