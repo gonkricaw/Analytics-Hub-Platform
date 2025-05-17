@@ -51,5 +51,8 @@ class DatabaseSeeder extends Seeder
 
         // Create email templates
         $this->call(EmailTemplateSeeder::class);
+
+        // Create sample embedded URLs
+        $this->call(EmbeddedUrlSeeder::class);
     }
 }

@@ -100,4 +100,28 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/unblock-ip/{id}', [\App\Http\Controllers\API\Admin\SecurityController::class, 'unblockIp'])
              ->middleware('permission:security-manage');
     });
+
+    // Menu Management
+    Route::get('/menu', [\App\Http\Controllers\API\MenuController::class, 'index']);
+
+    // Content Management
+    Route::get('/content/{slug}', [\App\Http\Controllers\API\ContentController::class, 'show']);
+    Route::get('/content/id/{id}', [\App\Http\Controllers\API\ContentController::class, 'getById']);
+    Route::get('/content/type/{type}', [\App\Http\Controllers\API\ContentController::class, 'getByType']);
+
+    // Embedded URLs
+    Route::get('/embed/{uuid}', [\App\Http\Controllers\API\EmbedController::class, 'show']);
+
+    // Admin routes
+    Route::middleware(['permission:admin-access'])->prefix('admin')->group(function () {
+        // Content Management (Admin)
+        Route::apiResource('content', \App\Http\Controllers\API\Admin\ContentController::class);
+
+        // Menu Management (Admin)
+        Route::apiResource('menu', \App\Http\Controllers\API\Admin\MenuController::class);
+        Route::post('/menu/order', [\App\Http\Controllers\API\Admin\MenuController::class, 'updateOrder']);
+
+        // Embedded URLs Management (Admin)
+        Route::apiResource('embed', \App\Http\Controllers\API\EmbedController::class)->except('show');
+    });
 });
