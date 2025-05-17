@@ -30,6 +30,7 @@
 import { mapState } from 'pinia';
 import { useLayoutStore } from './stores/layoutStore';
 import { useSystemConfigStore } from './stores/systemConfigStore';
+import { useAuthStore } from './stores/authStore';
 import GlobalLoadingIndicator from './components/GlobalLoadingIndicator.vue';
 
 export default {
@@ -44,14 +45,17 @@ export default {
       'snackbarColor',
       'snackbarTimeout'
     ])
-  },
-  created() {
+  },  created() {
     // Set up global error handling with the layout store
     this.$store = useLayoutStore();
 
     // Initialize the system configuration store
     const systemConfig = useSystemConfigStore();
     systemConfig.init();
+
+    // Initialize the auth store
+    const authStore = useAuthStore();
+    authStore.init();
   }
 };
 </script>

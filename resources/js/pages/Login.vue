@@ -27,7 +27,7 @@
             Sign in to your account
           </v-card-subtitle>
           <v-card-text>
-            <v-form ref="form" @submit.prevent="login" v-gsap-fade-in="{ duration: 0.8, delay: 0.5 }">
+            <v-form ref="form" @submit.prevent="handleLogin" v-gsap-fade-in="{ duration: 0.8, delay: 0.5 }">
               <v-text-field
                 v-model="email"
                 label="Email"
@@ -60,7 +60,7 @@
                   color="primary"
                   density="compact"
                 ></v-checkbox>
-                <a href="#" class="text-primary text-decoration-none">Forgot Password?</a>
+                <a @click.prevent="redirectToForgotPassword" href="#" class="text-primary text-decoration-none">Forgot Password?</a>
               </div>
 
               <v-btn
@@ -68,7 +68,7 @@
                 color="primary"
                 block
                 size="large"
-                :loading="loading"
+                :loading="isLoading"
                 elevation="1"
                 class="py-6 text-subtitle-1"
                 v-gsap-hover="{ scale: 1.03 }"
@@ -99,89 +99,83 @@
       </v-col>
     </v-row>
 
-    <!-- Terms & Conditions Dialog (will be implemented in Phase 2) -->
-    <v-dialog v-model="showTermsDialog" persistent max-width="700">
-      <v-card>
-        <v-card-title class="text-h5 bg-primary text-white">
-          Terms and Conditions
-        </v-card-title>
-        <v-card-text class="pa-4 mt-4">
-          <p>This is a placeholder for the Terms & Conditions content.</p>
-          <p>The actual implementation will be done in Phase 2.</p>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="error" variant="text" @click="declineTerms">
-            Decline
-          </v-btn>
-          <v-btn color="primary" variant="elevated" @click="acceptTerms">
-            Accept
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <!-- Terms & Conditions Dialog -->
+    <TermsAndConditionsDialog
+      v-if="showTermsDialog"
+      :show="showTermsDialog"
+      @accept="acceptTerms"
+      @decline="declineTerms"
+    />
   </v-container>
 </template>
 
 <script>
+import { mapState, mapActions } from 'pinia';
+import { useAuthStore } from '@/stores/authStore';
+import TermsAndConditionsDialog from '@/components/TermsAndConditionsDialog.vue';
+
 export default {
   name: 'LoginPage',
+  components: {
+    TermsAndConditionsDialog
+  },
   data() {
     return {
       email: '',
       password: '',
       rememberMe: false,
-      loading: false,
-      loginError: '',
-      showTermsDialog: false
+      showTermsDialog: false,
+      termId: null,
+      termsContent: ''
     };
   },
+  computed: {
+    ...mapState(useAuthStore, ['isLoading', 'loginError', 'requiresTermsAgreement'])
+  },
   methods: {
-    login() {
-      this.loading = true;
-      this.loginError = '';
+    ...mapActions(useAuthStore, ['login', 'logout', 'agreeToTerms']),
 
-      // Login logic will be implemented in future phases
-      setTimeout(() => {
-        this.loading = false;
+    async handleLogin() {
+      const credentials = {
+        email: this.email,
+        password: this.password,
+        remember_me: this.rememberMe
+      };
 
-        // Simulate successful login for demo purposes
-        if (this.email && this.password) {
-          // Check if this would be a first-time login (would be handled by API in Phase 2)
-          const isFirstLogin = this.email.includes('new');
+      const success = await this.login(credentials);
 
-          if (isFirstLogin) {
-            // For demo - simulate redirecting to change password page
-            alert('First-time login detected. Redirecting to change password page...');
-          } else {
-            // Simulating showing terms and conditions for demo purposes
-            // In real implementation, this would be shown only when T&C has been updated
-            this.showTermsDialog = true;
-
-            // In production, we would navigate to home on successful login after T&C is accepted
-            // this.$router.push({ name: 'home' });
-          }
+      if (success) {
+        if (this.requiresTermsAgreement) {
+          // Show terms and conditions dialog
+          this.showTermsDialog = true;
         } else {
-          // Show error message
-          this.loginError = 'Invalid email or password. Please try again.';
+          // Navigate to home page
+          this.$router.push({ name: 'home' });
         }
-        // Comment out for demo purposes so dialog is shown
-        // this.$router.push({ name: 'home' });
-      }, 1000);
+      }
     },
 
-    acceptTerms() {
-      this.showTermsDialog = false;
-      // Navigate to home page after accepting terms
-      this.$router.push({ name: 'home' });
+    async acceptTerms(termId) {
+      const success = await this.agreeToTerms(termId);
+
+      if (success) {
+        this.showTermsDialog = false;
+        // Navigate to home page after accepting terms
+        this.$router.push({ name: 'home' });
+      }
     },
 
     declineTerms() {
       this.showTermsDialog = false;
-      alert('Terms & Conditions must be accepted to use the application. You will be logged out.');
-      // In real implementation, this would log the user out
+      // Log the user out
+      this.logout();
+      // Reset form
       this.email = '';
       this.password = '';
+    },
+
+    redirectToForgotPassword() {
+      this.$router.push({ name: 'forgot-password' });
     }
   }
 }

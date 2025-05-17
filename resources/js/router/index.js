@@ -17,6 +17,18 @@ const routes = [
     component: () => import('@pages/Login.vue'),
     meta: { requiresAuth: false }
   },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@pages/ForgotPassword.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('@pages/ResetPassword.vue'),
+    meta: { requiresAuth: false }
+  },
   // Protected routes
   {
     path: '/profile',

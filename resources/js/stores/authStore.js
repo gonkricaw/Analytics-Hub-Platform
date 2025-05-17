@@ -1,6 +1,7 @@
 // resources/js/stores/authStore.js
 import { defineStore } from 'pinia';
-import axios from 'axios';
+import authService from '../services/authService';
+import { useLayoutStore } from './layoutStore';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -15,7 +16,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     // Check if user is authenticated
-    isUserAuthenticated: (state) => state.isAuthenticated && state.token,
+    isAuthenticated: (state) => state.isAuthenticated && state.token,
 
     // Get current user
     currentUser: (state) => state.user,
@@ -29,9 +30,10 @@ export const useAuthStore = defineStore('auth', {
     async login(credentials) {
       this.isLoading = true;
       this.loginError = null;
+      const layoutStore = useLayoutStore();
 
       try {
-        const response = await axios.post('/api/auth/login', credentials);
+        const response = await authService.login(credentials);
 
         if (response.data.token) {
           this.token = response.data.token;
@@ -40,6 +42,9 @@ export const useAuthStore = defineStore('auth', {
           this.requiresTermsAgreement = response.data.requiresTermsAgreement || false;
 
           localStorage.setItem('token', this.token);
+
+          // Display success message using layoutStore
+          layoutStore.showSuccessSnackbar('Login successful! Welcome back.');
 
           return true;
         }
@@ -53,9 +58,10 @@ export const useAuthStore = defineStore('auth', {
 
     // Logout action
     async logout() {
+      const layoutStore = useLayoutStore();
       try {
         if (this.token) {
-          await axios.post('/api/auth/logout');
+          await authService.logout();
         }
       } catch (error) {
         console.error('Logout error:', error);
@@ -64,6 +70,7 @@ export const useAuthStore = defineStore('auth', {
         this.user = null;
         this.isAuthenticated = false;
         localStorage.removeItem('token');
+        layoutStore.showInfoSnackbar('You have been logged out.');
       }
     },
 
@@ -74,7 +81,7 @@ export const useAuthStore = defineStore('auth', {
       this.isLoading = true;
 
       try {
-        const response = await axios.get('/api/auth/me');
+        const response = await authService.getCurrentUser();
         this.user = response.data;
         this.isAuthenticated = true;
       } catch (error) {
@@ -88,11 +95,14 @@ export const useAuthStore = defineStore('auth', {
     // Handle forgot password request
     async handleForgotPassword(email) {
       this.isLoading = true;
+      const layoutStore = useLayoutStore();
 
       try {
-        const response = await axios.post('/api/auth/forgot-password', { email });
+        const response = await authService.forgotPassword(email);
+        layoutStore.showSuccessSnackbar('Password reset email sent. Please check your inbox.');
         return response.data;
       } catch (error) {
+        layoutStore.showErrorSnackbar(error.response?.data?.message || 'Failed to process password reset.');
         throw error.response?.data?.message || 'Failed to process password reset.';
       } finally {
         this.isLoading = false;
@@ -102,11 +112,14 @@ export const useAuthStore = defineStore('auth', {
     // Handle password reset
     async handleResetPassword(formData) {
       this.isLoading = true;
+      const layoutStore = useLayoutStore();
 
       try {
-        const response = await axios.post('/api/auth/reset-password', formData);
+        const response = await authService.resetPassword(formData);
+        layoutStore.showSuccessSnackbar('Password has been reset successfully. You can now log in with your new password.');
         return response.data;
       } catch (error) {
+        layoutStore.showErrorSnackbar(error.response?.data?.message || 'Failed to reset password.');
         throw error.response?.data?.message || 'Failed to reset password.';
       } finally {
         this.isLoading = false;
@@ -116,12 +129,15 @@ export const useAuthStore = defineStore('auth', {
     // Agree to terms and conditions
     async agreeToTerms(termId) {
       this.isLoading = true;
+      const layoutStore = useLayoutStore();
 
       try {
-        await axios.post('/api/terms/agree', { term_id: termId });
+        await authService.agreeToTerms(termId);
         this.requiresTermsAgreement = false;
+        layoutStore.showSuccessSnackbar('Terms and conditions accepted.');
         return true;
       } catch (error) {
+        layoutStore.showErrorSnackbar('Error accepting terms and conditions.');
         console.error('Error agreeing to terms:', error);
         return false;
       } finally {
@@ -132,11 +148,14 @@ export const useAuthStore = defineStore('auth', {
     // Change user password
     async changePassword(formData) {
       this.isLoading = true;
+      const layoutStore = useLayoutStore();
 
       try {
-        const response = await axios.post('/api/user/change-password', formData);
+        const response = await authService.changePassword(formData);
+        layoutStore.showSuccessSnackbar('Password changed successfully.');
         return response.data;
       } catch (error) {
+        layoutStore.showErrorSnackbar(error.response?.data?.message || 'Failed to change password.');
         throw error.response?.data?.message || 'Failed to change password.';
       } finally {
         this.isLoading = false;
@@ -146,23 +165,58 @@ export const useAuthStore = defineStore('auth', {
     // Update user avatar
     async updateAvatar(formData) {
       this.isLoading = true;
+      const layoutStore = useLayoutStore();
 
       try {
-        const response = await axios.post('/api/user/update-avatar', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        const response = await authService.updateAvatar(formData);
 
         if (response.data.user) {
           this.user = response.data.user;
         }
 
+        layoutStore.showSuccessSnackbar('Profile picture updated successfully.');
         return response.data;
       } catch (error) {
+        layoutStore.showErrorSnackbar(error.response?.data?.message || 'Failed to update profile picture.');
         throw error.response?.data?.message || 'Failed to update avatar.';
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    // Update user profile
+    async updateProfile(profileData) {
+      this.isLoading = true;
+      const layoutStore = useLayoutStore();
+
+      try {
+        const response = await authService.updateProfile(profileData);
+
+        if (response.data.user) {
+          this.user = response.data.user;
+        }
+
+        layoutStore.showSuccessSnackbar('Profile updated successfully.');
+        return response.data;
+      } catch (error) {
+        layoutStore.showErrorSnackbar(error.response?.data?.message || 'Failed to update profile.');
+        throw error.response?.data?.message || 'Failed to update profile.';
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // Initialize auth store with session token
+    init() {
+      const token = localStorage.getItem('token');
+
+      if (token) {
+        this.token = token;
+        this.isAuthenticated = true;
+        this.fetchUser();
+
+        // Setup axios interceptors
+        authService.setupInterceptors(() => this.logout());
       }
     }
   }
