@@ -1,42 +1,62 @@
 <!-- resources/js/App.vue -->
 <template>
-  <v-app>
-    <router-view />
+  <component :is="layout">
+    <template v-if="layout !== 'blank-layout'">
+      <!-- Global Loading Indicator -->
+      <GlobalLoadingIndicator />
 
-    <!-- Global Loading Indicator -->
-    <GlobalLoadingIndicator />
-
-    <!-- Global Snackbar for notifications -->
-    <v-snackbar
-      v-model="showSnackbar"
-      :color="snackbarColor"
-      :timeout="snackbarTimeout"
-      location="top"
-    >
-      {{ snackbarText }}
-      <template v-slot:actions>
-        <v-btn
-          variant="text"
-          @click="showSnackbar = false"
-        >
-          Close
-        </v-btn>
-      </template>
-    </v-snackbar>
-  </v-app>
+      <!-- Global Snackbar for notifications -->
+      <v-snackbar
+        v-model="showSnackbar"
+        :color="snackbarColor"
+        :timeout="snackbarTimeout"
+        location="top"
+      >
+        {{ snackbarText }}
+        <template v-slot:actions>
+          <v-btn
+            variant="text"
+            @click="showSnackbar = false"
+          >
+            Close
+          </v-btn>
+        </template>
+      </v-snackbar>
+    </template>
+  </component>
 </template>
 
 <script>
+import { computed } from 'vue';
 import { mapState } from 'pinia';
+import { useRoute } from 'vue-router';
 import { useLayoutStore } from './stores/layoutStore';
 import { useSystemConfigStore } from './stores/systemConfigStore';
 import { useAuthStore } from './stores/authStore';
 import GlobalLoadingIndicator from './components/GlobalLoadingIndicator.vue';
 
+// Import layouts
+import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import BlankLayout from '@/layouts/BlankLayout.vue';
+
 export default {
   name: 'App',
   components: {
-    GlobalLoadingIndicator
+    GlobalLoadingIndicator,
+    DefaultLayout,
+    BlankLayout
+  },
+  setup() {
+    const route = useRoute();
+
+    // Determine layout based on route metadata
+    const layout = computed(() => {
+      // Get layout from route meta, default to 'default-layout'
+      const routeLayout = route.meta.layout || 'default';
+      return `${routeLayout}-layout`;
+    });
+
+    return { layout };
   },
   computed: {
     ...mapState(useLayoutStore, [
@@ -45,7 +65,8 @@ export default {
       'snackbarColor',
       'snackbarTimeout'
     ])
-  },  created() {
+  },
+  created() {
     // Set up global error handling with the layout store
     this.$store = useLayoutStore();
 

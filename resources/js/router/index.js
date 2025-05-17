@@ -36,6 +36,26 @@ const routes = [
     component: () => import('@/views/ProfileView.vue'),
     meta: { requiresAuth: true }
   },
+  // Content routes
+  {
+    path: '/content/:slug',
+    name: 'content-by-slug',
+    component: () => import('@/views/ContentView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/content/id/:id',
+    name: 'content-by-id',
+    component: () => import('@/views/ContentView.vue'),
+    meta: { requiresAuth: true }
+  },
+  // Embed routes
+  {
+    path: '/embed/:uuid',
+    name: 'embed',
+    component: () => import('@/views/EmbedView.vue'),
+    meta: { requiresAuth: true, layout: 'blank' }
+  },
   // Development routes
   {
     path: '/dev/component-showcase',

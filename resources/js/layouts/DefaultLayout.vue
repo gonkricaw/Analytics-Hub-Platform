@@ -72,7 +72,9 @@
     <!-- Main Content -->
     <v-main>
       <!-- Page content -->
-      <slot></slot>
+      <slot>
+        <router-view />
+      </slot>
     </v-main>
 
     <!-- Footer -->
