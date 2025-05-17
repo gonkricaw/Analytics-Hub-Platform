@@ -41,7 +41,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/user/profile', [\App\Http\Controllers\API\UserController::class, 'updateProfile']);
     Route::post('/user/avatar', [\App\Http\Controllers\API\ProfileController::class, 'updateAvatar']);
     Route::get('/user/avatar', [\App\Http\Controllers\API\ProfileController::class, 'getAvatar']);
-    Route::post('/user/avatar/remove', [\App\Http\Controllers\API\ProfileController::class, 'removeAvatar']);
 
     // User Management
     Route::apiResource('users', \App\Http\Controllers\API\UserController::class);
@@ -92,5 +91,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/audit-logs/{id}', [\App\Http\Controllers\API\Admin\AuditLogController::class, 'show']);
         Route::get('/audit-logs-actions', [\App\Http\Controllers\API\Admin\AuditLogController::class, 'getActions']);
         Route::get('/audit-logs-model-types', [\App\Http\Controllers\API\Admin\AuditLogController::class, 'getModelTypes']);
+    });
+
+    // Security management (Admin only)
+    Route::middleware(['permission:security-view'])->prefix('admin/security')->group(function () {
+        Route::get('/blocked-ips', [\App\Http\Controllers\API\Admin\SecurityController::class, 'getBlockedIps']);
+        Route::get('/login-history', [\App\Http\Controllers\API\Admin\SecurityController::class, 'getLoginHistory']);
+        Route::post('/unblock-ip/{id}', [\App\Http\Controllers\API\Admin\SecurityController::class, 'unblockIp'])
+             ->middleware('permission:security-manage');
     });
 });
