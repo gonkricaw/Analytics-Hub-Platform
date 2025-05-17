@@ -1,43 +1,62 @@
 <!-- resources/js/App.vue -->
 <template>
   <v-app>
-    <v-app-bar app color="primary" dark>
-      <v-app-bar-nav-icon></v-app-bar-nav-icon>
-      <v-toolbar-title>Indonet Analytics Hub</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn icon>
-        <v-icon>mdi-bell</v-icon>
-      </v-btn>
-      <v-btn icon>
-        <v-icon>mdi-account-circle</v-icon>
-      </v-btn>
-    </v-app-bar>
+    <router-view />
 
-    <v-main>
-      <v-container fluid>
-        <router-view></router-view>
-      </v-container>
-    </v-main>
+    <!-- Global Loading Indicator -->
+    <GlobalLoadingIndicator />
 
-    <v-footer app color="primary" dark>
-      <v-row justify="center" no-gutters>
-        <v-col class="text-center" cols="12">
-          {{ new Date().getFullYear() }} — <strong>Indonet Analytics Hub</strong>
-        </v-col>
-      </v-row>
-    </v-footer>
+    <!-- Global Snackbar for notifications -->
+    <v-snackbar
+      v-model="showSnackbar"
+      :color="snackbarColor"
+      :timeout="snackbarTimeout"
+      location="top"
+    >
+      {{ snackbarText }}
+      <template v-slot:actions>
+        <v-btn
+          variant="text"
+          @click="showSnackbar = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
 <script>
+import { mapState } from 'pinia';
+import { useLayoutStore } from './stores/layoutStore';
+import { useSystemConfigStore } from './stores/systemConfigStore';
+import GlobalLoadingIndicator from './components/GlobalLoadingIndicator.vue';
+
 export default {
   name: 'App',
-  data: () => ({
-    //
-  }),
+  components: {
+    GlobalLoadingIndicator
+  },
+  computed: {
+    ...mapState(useLayoutStore, [
+      'showSnackbar',
+      'snackbarText',
+      'snackbarColor',
+      'snackbarTimeout'
+    ])
+  },
+  created() {
+    // Set up global error handling with the layout store
+    this.$store = useLayoutStore();
+
+    // Initialize the system configuration store
+    const systemConfig = useSystemConfigStore();
+    systemConfig.init();
+  }
 };
 </script>
 
 <style lang="scss">
-// App-specific global styles
+/* Global styles that apply to the entire app */
+@import '@scss/main.scss';
 </style>

@@ -24,6 +24,16 @@ const routes = [
     component: () => import('@/views/ProfileView.vue'),
     meta: { requiresAuth: true }
   },
+  // Development routes
+  {
+    path: '/dev/component-showcase',
+    name: 'component-showcase',
+    component: () => import('@pages/ComponentShowcase.vue'),
+    meta: {
+      requiresAuth: false,
+      development: true
+    }
+  },
   // More protected routes will be added in future phases
 ];
 
@@ -44,6 +54,13 @@ router.beforeEach((to, from, next) => {
   // Import auth store directly to avoid circular dependency
   const authStore = window.pinia?.state?.value?.auth;
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const isDevelopmentRoute = to.matched.some(record => record.meta.development);
+
+  // Check if development routes should be accessible
+  if (isDevelopmentRoute && process.env.NODE_ENV !== 'development') {
+    next({ name: 'home' });
+    return;
+  }
 
   if (requiresAuth && (!authStore || !authStore.isAuthenticated)) {
     next({ name: 'login', query: { redirect: to.fullPath } });
