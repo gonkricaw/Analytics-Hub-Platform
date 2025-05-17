@@ -118,6 +118,16 @@ export default {
     this.setupMenuAnimations();
   },
 
+  watch: {
+    // Watch for menu changes to emit to parent for mobile menu
+    menus: {
+      handler(newMenus) {
+        this.$emit('menu-updated', newMenus);
+      },
+      deep: true
+    }
+  },
+
   methods: {
     ...mapActions(useMenuStore, {
       fetchMenus: 'fetchMenus',
@@ -128,11 +138,16 @@ export default {
       if (this.menus.length === 0) {
         try {
           await this.fetchMenus();
+          // Emit menus to parent once loaded
+          this.$emit('menu-updated', this.menus);
         } catch (error) {
           console.error('Failed to load menu structure:', error);
           // Show a small error indicator that doesn't break the layout
           this.$emit('menu-load-error', error);
         }
+      } else {
+        // If menus already loaded, still emit to parent
+        this.$emit('menu-updated', this.menus);
       }
     },
 

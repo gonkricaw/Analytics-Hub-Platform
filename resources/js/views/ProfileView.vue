@@ -3,19 +3,20 @@
   <v-container>
     <v-row>
       <v-col cols="12">
-        <h1 class="text-h4 mb-6">My Profile</h1>
+        <h1 class="text-h4 text-sm-h4 text-md-h4 mb-4 mb-sm-6">My Profile</h1>
       </v-col>
     </v-row>
 
     <v-row>
+      <!-- Profile information card - full width on mobile, half width on medium screens and up -->
       <v-col cols="12" md="6">
         <v-card class="mb-4">
-          <v-card-title class="primary lighten-1 white--text">
-            <v-icon left color="white">mdi-account-edit</v-icon>
-            Profile Information
+          <v-card-title class="primary lighten-1 white--text d-flex align-center">
+            <v-icon left color="white" class="me-2">mdi-account-edit</v-icon>
+            <span>Profile Information</span>
           </v-card-title>
 
-          <v-card-text class="pa-4">
+          <v-card-text class="pa-3 pa-sm-4">
             <v-form ref="profileForm" v-model="isProfileFormValid" @submit.prevent="updateProfile">
               <v-row>
                 <v-col cols="12">
@@ -25,6 +26,7 @@
                     :rules="nameRules"
                     required
                     variant="outlined"
+                    density="comfortable"
                   ></v-text-field>
                 </v-col>
 
@@ -35,6 +37,7 @@
                     :rules="emailRules"
                     disabled
                     variant="outlined"
+                    density="comfortable"
                   ></v-text-field>
                 </v-col>
 
@@ -43,6 +46,7 @@
                     v-model="profileData.phone"
                     label="Phone Number"
                     variant="outlined"
+                    density="comfortable"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -53,6 +57,8 @@
                   type="submit"
                   :loading="isUpdatingProfile"
                   :disabled="!isProfileFormValid || isUpdatingProfile"
+                  size="large"
+                  class="px-6 py-2"
                 >
                   Save Changes
                 </v-btn>
@@ -61,13 +67,14 @@
           </v-card-text>
         </v-card>
 
+        <!-- Change Password Card - full width on mobile, half width on medium screens and up -->
         <v-card>
-          <v-card-title class="primary lighten-1 white--text">
-            <v-icon left color="white">mdi-lock</v-icon>
-            Change Password
+          <v-card-title class="primary lighten-1 white--text d-flex align-center">
+            <v-icon left color="white" class="me-2">mdi-lock</v-icon>
+            <span>Change Password</span>
           </v-card-title>
 
-          <v-card-text class="pa-4">
+          <v-card-text class="pa-3 pa-sm-4">
             <v-form ref="passwordForm" v-model="isPasswordFormValid" @submit.prevent="changePassword">
               <v-row>
                 <v-col cols="12">
@@ -79,6 +86,7 @@
                     :append-inner-icon="showCurrentPassword ? 'mdi-eye' : 'mdi-eye-off'"
                     required
                     variant="outlined"
+                    density="comfortable"
                     @click:append-inner="showCurrentPassword = !showCurrentPassword"
                   ></v-text-field>
                 </v-col>
@@ -92,6 +100,7 @@
                     :append-inner-icon="showNewPassword ? 'mdi-eye' : 'mdi-eye-off'"
                     required
                     variant="outlined"
+                    density="comfortable"
                     @click:append-inner="showNewPassword = !showNewPassword"
                   ></v-text-field>
                 </v-col>
@@ -105,6 +114,7 @@
                     :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
                     required
                     variant="outlined"
+                    density="comfortable"
                     @click:append-inner="showConfirmPassword = !showConfirmPassword"
                   ></v-text-field>
                 </v-col>
@@ -116,6 +126,8 @@
                   type="submit"
                   :loading="isChangingPassword"
                   :disabled="!isPasswordFormValid || isChangingPassword"
+                  size="large"
+                  class="px-6 py-2"
                 >
                   Update Password
                 </v-btn>
@@ -126,20 +138,78 @@
       </v-col>
 
       <v-col cols="12" md="6">
-        <v-card>
-          <v-card-title class="primary lighten-1 white--text">
-            <v-icon left color="white">mdi-account-circle</v-icon>
-            Profile Picture
+        <v-card class="mb-4">
+          <v-card-title class="primary lighten-1 white--text d-flex align-center">
+            <v-icon left color="white" class="me-2">mdi-account-circle</v-icon>
+            <span>Profile Picture</span>
           </v-card-title>
 
-          <v-card-text class="pa-4">
+          <v-card-text class="pa-3 pa-sm-4">
             <avatar-upload />
+          </v-card-text>
+        </v-card>
+
+        <!-- Account Settings Card -->
+        <v-card>
+          <v-card-title class="primary lighten-1 white--text d-flex align-center">
+            <v-icon left color="white" class="me-2">mdi-cog</v-icon>
+            <span>Account Settings</span>
+          </v-card-title>
+
+          <v-card-text class="pa-3 pa-sm-4">
+            <v-list>
+              <v-list-item>
+                <v-switch
+                  v-model="accountSettings.emailNotifications"
+                  color="primary"
+                  density="comfortable"
+                  hide-details
+                >
+                  <template v-slot:label>
+                    <div>
+                      <div class="text-subtitle-1">Email Notifications</div>
+                      <div class="text-caption text-grey">Receive email notifications for important updates</div>
+                    </div>
+                  </template>
+                </v-switch>
+              </v-list-item>
+
+              <v-divider></v-divider>
+
+              <v-list-item>
+                <v-switch
+                  v-model="accountSettings.twoFactorAuth"
+                  color="primary"
+                  density="comfortable"
+                  hide-details
+                >
+                  <template v-slot:label>
+                    <div>
+                      <div class="text-subtitle-1">Two Factor Authentication</div>
+                      <div class="text-caption text-grey">Add an extra layer of security to your account</div>
+                    </div>
+                  </template>
+                </v-switch>
+              </v-list-item>
+            </v-list>
+
+            <div class="d-flex justify-end mt-3">
+              <v-btn
+                color="primary"
+                @click="saveAccountSettings"
+                :loading="isSavingSettings"
+                size="large"
+                class="px-6 py-2"
+              >
+                Save Settings
+              </v-btn>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <v-snackbar v-model="showSnackbar" :color="snackbarColor" timeout="3000">
+    <v-snackbar v-model="showSnackbar" :color="snackbarColor" timeout="3000" class="text-center">
       {{ snackbarText }}
       <template v-slot:actions>
         <v-btn variant="text" @click="showSnackbar = false">Close</v-btn>
@@ -187,6 +257,13 @@ export default {
     const showCurrentPassword = ref(false);
     const showNewPassword = ref(false);
     const showConfirmPassword = ref(false);
+
+    // Account settings
+    const accountSettings = ref({
+      emailNotifications: true,
+      twoFactorAuth: false
+    });
+    const isSavingSettings = ref(false);
 
     // Snackbar
     const showSnackbar = ref(false);
@@ -260,6 +337,29 @@ export default {
     };
 
     // Change password
+    // Save account settings
+    const saveAccountSettings = async () => {
+      isSavingSettings.value = true;
+
+      try {
+        // Here we would call the API to save the settings
+        // For now just simulate a delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Show success message
+        snackbarText.value = 'Account settings saved successfully';
+        snackbarColor.value = 'success';
+        showSnackbar.value = true;
+      } catch (error) {
+        console.error('Error saving account settings:', error);
+        snackbarText.value = 'Failed to save account settings';
+        snackbarColor.value = 'error';
+        showSnackbar.value = true;
+      } finally {
+        isSavingSettings.value = false;
+      }
+    };
+
     const changePassword = async () => {
       if (!isPasswordFormValid.value) return;
 
@@ -312,9 +412,12 @@ export default {
       emailRules,
       currentPasswordRules,
       passwordRules,
+      accountSettings,
+      isSavingSettings,
       passwordMatchRule,
       updateProfile,
-      changePassword
+      changePassword,
+      saveAccountSettings
     };
   }
 };

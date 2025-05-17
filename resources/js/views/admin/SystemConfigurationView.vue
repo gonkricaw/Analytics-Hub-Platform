@@ -2,60 +2,65 @@
 <template>
   <div>
     <v-card>
-      <v-card-title class="d-flex justify-space-between align-center">
-        <div>
-          <h1 class="text-h4">System Configuration Management</h1>
+      <v-card-title class="flex-wrap">
+        <div class="w-100 w-md-75 mb-4 mb-md-0">
+          <h1 class="text-h4 text-sm-h4 text-md-h4">System Configuration Management</h1>
           <p class="text-subtitle-1">Manage application system configurations</p>
         </div>
-        <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
-          Add Configuration
-        </v-btn>
+        <div class="w-100 w-md-25 d-flex justify-start justify-md-end">
+          <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus" class="px-3">
+            <span class="d-none d-sm-inline">Add Configuration</span>
+            <span class="d-inline d-sm-none">Add</span>
+          </v-btn>
+        </div>
       </v-card-title>
 
       <!-- Filters section -->
       <v-card-text>
         <v-row>
-          <v-col cols="12" sm="4">
+          <v-col cols="12" sm="6" md="4">
             <v-text-field
               v-model="filters.search"
               label="Search by key"
               prepend-inner-icon="mdi-magnify"
               hide-details
-              dense
-              outlined
+              density="compact"
+              variant="outlined"
               @keyup.enter="applyFilters"
+              class="mb-3 mb-sm-0"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="4">
+          <v-col cols="12" sm="6" md="4">
             <v-select
               v-model="filters.group"
               :items="groupOptions"
               label="Filter by group"
               clearable
               hide-details
-              dense
-              outlined
+              density="compact"
+              variant="outlined"
               @update:modelValue="applyFilters"
+              class="mb-3 mb-md-0"
             ></v-select>
           </v-col>
-          <v-col cols="12" sm="4">
+          <v-col cols="12" sm="12" md="4">
             <v-select
               v-model="filters.isPublic"
               :items="visibilityOptions"
               label="Filter by visibility"
               clearable
               hide-details
-              dense
-              outlined
+              density="compact"
+              variant="outlined"
               @update:modelValue="applyFilters"
             ></v-select>
           </v-col>
         </v-row>
-        <div class="d-flex justify-end mt-2">
-          <v-btn color="secondary" text @click="resetFilters" variant="outlined" class="mr-2">
-            Reset Filters
+        <div class="d-flex flex-column flex-sm-row justify-end mt-4">
+          <v-btn color="secondary" text @click="resetFilters" variant="outlined" class="mb-2 mb-sm-0 me-0 me-sm-2 w-100 w-sm-auto">
+            Reset
           </v-btn>
-          <v-btn color="primary" @click="applyFilters" variant="outlined">
+          <v-btn color="primary" @click="applyFilters" variant="outlined" class="w-100 w-sm-auto">
             Apply Filters
           </v-btn>
         </div>
@@ -67,64 +72,66 @@
       </v-overlay>
 
       <!-- Data table -->
-      <v-data-table-server
-        v-model:items-per-page="pagination.itemsPerPage"
-        v-model:page="pagination.page"
-        :headers="headers"
-        :items="configurations"
-        :loading="isLoading"
-        :items-length="pagination.totalItems"
-        :items-per-page-options="[5, 10, 20, 50]"
-        class="elevation-1"
-        @update:options="handleTableOptions"
-      >
-        <!-- Custom headers -->
-        <template v-slot:header.actions>
-          <span class="text-subtitle-1 font-weight-black">Actions</span>
-        </template>
+      <div class="table-responsive">
+        <v-data-table-server
+          v-model:items-per-page="pagination.itemsPerPage"
+          v-model:page="pagination.page"
+          :headers="getDisplayHeaders"
+          :items="configurations"
+          :loading="isLoading"
+          :items-length="pagination.totalItems"
+          :items-per-page-options="[5, 10, 20, 50]"
+          class="elevation-1"
+          @update:options="handleTableOptions"
+        >
+          <!-- Custom headers -->
+          <template v-slot:header.actions>
+            <span class="text-subtitle-1 font-weight-black">Actions</span>
+          </template>
 
-        <!-- Type column -->
-        <template v-slot:item.type="{ item }">
-          <v-chip :color="getTypeColor(item.type)" size="small" class="text-uppercase">
-            {{ item.type }}
-          </v-chip>
-        </template>
+          <!-- Type column -->
+          <template v-slot:item.type="{ item }">
+            <v-chip :color="getTypeColor(item.type)" size="small" class="text-uppercase">
+              {{ item.type }}
+            </v-chip>
+          </template>
 
-        <!-- Value column -->
-        <template v-slot:item.value="{ item }">
-          <div class="text-truncate" style="max-width: 300px;" :title="item.value">
-            {{ formatValue(item) }}
-          </div>
-        </template>
+          <!-- Value column -->
+          <template v-slot:item.value="{ item }">
+            <div class="text-truncate config-value" :title="item.value">
+              {{ formatValue(item) }}
+            </div>
+          </template>
 
-        <!-- Public status -->
-        <template v-slot:item.is_public="{ item }">
-          <v-icon :color="item.is_public ? 'success' : 'grey'">
-            {{ item.is_public ? 'mdi-eye' : 'mdi-eye-off' }}
-          </v-icon>
-          <span class="ml-1">{{ item.is_public ? 'Public' : 'Private' }}</span>
-        </template>
+          <!-- Public status -->
+          <template v-slot:item.is_public="{ item }">
+            <v-icon :color="item.is_public ? 'success' : 'grey'">
+              {{ item.is_public ? 'mdi-eye' : 'mdi-eye-off' }}
+            </v-icon>
+            <span class="ml-1">{{ item.is_public ? 'Public' : 'Private' }}</span>
+          </template>
 
-        <!-- Actions column -->
-        <template v-slot:item.actions="{ item }">
-          <div class="d-flex justify-start">
-            <v-btn icon size="small" color="primary" @click="openEditDialog(item)" class="mr-1">
-              <v-icon>mdi-pencil</v-icon>
-            </v-btn>
-            <v-btn icon size="small" color="error" @click="confirmDelete(item)">
-              <v-icon>mdi-delete</v-icon>
-            </v-btn>
-          </div>
-        </template>
+          <!-- Actions column -->
+          <template v-slot:item.actions="{ item }">
+            <div class="d-flex justify-start">
+              <v-btn icon size="small" color="primary" @click="openEditDialog(item)" class="mr-1">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn icon size="small" color="error" @click="confirmDelete(item)">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </div>
+          </template>
 
-        <!-- Empty state -->
-        <template v-slot:no-data>
-          <div class="d-flex flex-column align-center py-8">
-            <v-icon size="large" color="grey">mdi-database-off</v-icon>
-            <p class="text-subtitle-1 mt-2 text-grey">No configurations found</p>
-          </div>
-        </template>
-      </v-data-table-server>
+          <!-- Empty state -->
+          <template v-slot:no-data>
+            <div class="d-flex flex-column align-center py-8">
+              <v-icon size="large" color="grey">mdi-database-off</v-icon>
+              <p class="text-subtitle-1 mt-2 text-grey">No configurations found</p>
+            </div>
+          </template>
+        </v-data-table-server>
+      </div>
     </v-card>
 
     <!-- Create/Edit Configuration Dialog -->
@@ -338,11 +345,45 @@ export default defineComponent({
 
     existingGroups() {
       return this.configurationGroups;
+    },
+
+    // Responsive headers based on screen size
+    getDisplayHeaders() {
+      // Get current display size
+      const isMobile = window.innerWidth < 600;
+      const isTablet = window.innerWidth >= 600 && window.innerWidth < 960;
+
+      if (isMobile) {
+        // On mobile, show minimal columns
+        return [
+          { title: 'Key', key: 'key', align: 'start', sortable: true },
+          { title: 'Value', key: 'value', align: 'start', sortable: false },
+          { title: 'Actions', key: 'actions', align: 'center', sortable: false }
+        ];
+      } else if (isTablet) {
+        // On tablet, show more columns but still limited
+        return [
+          { title: 'Key', key: 'key', align: 'start', sortable: true },
+          { title: 'Value', key: 'value', align: 'start', sortable: false },
+          { title: 'Type', key: 'type', align: 'start', sortable: true },
+          { title: 'Actions', key: 'actions', align: 'center', sortable: false }
+        ];
+      }
+
+      // On desktop, show all columns
+      return this.headers;
     }
   },
 
   mounted() {
     this.fetchData();
+    // Add window resize listener for responsive layout updates
+    window.addEventListener('resize', this.handleResize);
+  },
+
+  beforeUnmount() {
+    // Clean up resize listener when component is destroyed
+    window.removeEventListener('resize', this.handleResize);
   },
 
   methods: {
@@ -476,6 +517,12 @@ export default defineComponent({
       } finally {
         this.isSubmitting = false;
       }
+    },
+
+    // Handle resize events for responsive headers
+    handleResize() {
+      // Force component to update when screen size changes
+      this.$forceUpdate();
     }
   }
 });
@@ -486,5 +533,68 @@ export default defineComponent({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.config-value {
+  max-width: 300px;
+}
+
+/* Responsive styling */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+  /* Adjustments for mobile */
+  :deep(.v-data-table) th,
+  :deep(.v-data-table) td {
+    padding: 8px 8px !important;
+  }
+
+  .config-value {
+    max-width: 120px;
+  }
+
+  :deep(.v-btn--icon) {
+    width: 40px !important;
+    height: 40px !important;
+    margin: 0 2px !important;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 960px) {
+  /* Adjustments for tablets */
+  .config-value {
+    max-width: 200px;
+  }
+}
+
+/* Touch-friendly targets */
+:deep(.v-btn) {
+  min-height: 40px;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.w-sm-auto {
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  .w-sm-auto {
+    width: auto;
+  }
+
+  .w-md-75 {
+    width: 75%;
+  }
+
+  .w-md-25 {
+    width: 25%;
+  }
 }
 </style>

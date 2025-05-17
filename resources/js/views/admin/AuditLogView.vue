@@ -2,14 +2,17 @@
 <template>
   <div>
     <v-card>
-      <v-card-title class="d-flex justify-space-between align-center">
-        <div>
-          <h1 class="text-h4">Audit Log Management</h1>
+      <v-card-title class="flex-wrap">
+        <div class="w-100 w-md-75 mb-4 mb-md-0">
+          <h1 class="text-h4 text-sm-h4 text-md-h4">Audit Log Management</h1>
           <p class="text-subtitle-1">Track and monitor all system activities</p>
         </div>
-        <v-btn color="primary" @click="exportLogs" prepend-icon="mdi-download">
-          Export Logs
-        </v-btn>
+        <div class="w-100 w-md-25 d-flex justify-start justify-md-end">
+          <v-btn color="primary" @click="exportLogs" prepend-icon="mdi-download" class="px-3">
+            <span class="d-none d-sm-inline">Export Logs</span>
+            <span class="d-inline d-sm-none">Export</span>
+          </v-btn>
+        </div>
       </v-card-title>
 
       <!-- Filters section -->
@@ -34,6 +37,7 @@
                     density="compact"
                     variant="outlined"
                     @keyup.enter="applyFilters"
+                    class="mb-3 mb-sm-0"
                   ></v-text-field>
                 </v-col>
 
@@ -47,6 +51,7 @@
                     hide-details
                     density="compact"
                     variant="outlined"
+                    class="mb-3 mb-md-0"
                   ></v-select>
                 </v-col>
 
@@ -60,6 +65,7 @@
                     hide-details
                     density="compact"
                     variant="outlined"
+                    class="mb-3 mb-md-0"
                   ></v-select>
                 </v-col>
 
@@ -73,6 +79,7 @@
                     hide-details
                     density="compact"
                     variant="outlined"
+                    class="mb-3 mb-md-0"
                   ></v-select>
                 </v-col>
 
@@ -153,18 +160,19 @@
       </v-overlay>
 
       <!-- Data table -->
-      <v-data-table-server
-        v-model:items-per-page="pagination.itemsPerPage"
-        v-model:page="pagination.page"
-        :headers="headers"
-        :items="formattedLogs"
-        :loading="isLoading"
-        :items-length="pagination.totalItems"
-        :items-per-page-options="[10, 20, 50, 100]"
-        density="compact"
-        class="elevation-1"
-        @update:options="handleTableOptions"
-      >
+      <div class="table-responsive">
+        <v-data-table-server
+          v-model:items-per-page="pagination.itemsPerPage"
+          v-model:page="pagination.page"
+          :headers="getResponsiveHeaders"
+          :items="formattedLogs"
+          :loading="isLoading"
+          :items-length="pagination.totalItems"
+          :items-per-page-options="[10, 20, 50, 100]"
+          density="compact"
+          class="elevation-1"
+          @update:options="handleTableOptions"
+        >
         <!-- Action column -->
         <template v-slot:item.actionDisplay="{ item }">
           <v-chip :color="item.actionColor" size="small" variant="outlined" class="text-uppercase">
@@ -426,6 +434,33 @@ export default defineComponent({
   },
 
   computed: {
+    // Responsive headers based on screen size
+    getResponsiveHeaders() {
+      // Get current display size
+      const isMobile = window.innerWidth < 600;
+      const isTablet = window.innerWidth >= 600 && window.innerWidth < 960;
+
+      if (isMobile) {
+        // On mobile, show minimal columns
+        return [
+          { title: 'User', key: 'userDisplay', align: 'start', sortable: false },
+          { title: 'Action', key: 'actionDisplay', align: 'center', sortable: true },
+          { title: 'Actions', key: 'actions', align: 'center', sortable: false, width: '60px' }
+        ];
+      } else if (isTablet) {
+        // On tablet, show more columns but still limited
+        return [
+          { title: 'User', key: 'userDisplay', align: 'start', sortable: false },
+          { title: 'Action', key: 'actionDisplay', align: 'center', sortable: true },
+          { title: 'Date/Time', key: 'datetime', align: 'start', sortable: true },
+          { title: 'Actions', key: 'actions', align: 'center', sortable: false, width: '60px' }
+        ];
+      }
+
+      // On desktop, show all columns
+      return this.headers;
+    },
+
     userOptions() {
       return this.availableUsers.map(user => ({
         value: user.id,
@@ -481,6 +516,13 @@ export default defineComponent({
 
   mounted() {
     this.fetchData();
+    // Add window resize listener for responsive layout updates
+    window.addEventListener('resize', this.handleResize);
+  },
+
+  beforeUnmount() {
+    // Clean up resize listener when component is destroyed
+    window.removeEventListener('resize', this.handleResize);
   },
 
   methods: {
@@ -582,6 +624,12 @@ export default defineComponent({
         'logout': 'grey'
       };
       return colors[action] || 'primary';
+    },
+
+    // Handle resize events for responsive headers
+    handleResize() {
+      // Force component to update when screen size changes
+      this.$forceUpdate();
     }
   }
 });
@@ -594,5 +642,68 @@ export default defineComponent({
 
 .text-success {
   color: #4caf50;
+}
+
+/* Responsive styles */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+  /* Mobile optimizations */
+  :deep(.v-data-table) th,
+  :deep(.v-data-table) td {
+    padding: 6px 8px !important;
+  }
+
+  :deep(.v-btn--icon) {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 0 !important;
+    margin: 0 2px !important;
+  }
+
+  /* Better touch targets */
+  :deep(.v-btn),
+  :deep(.v-list-item) {
+    min-height: 44px;
+  }
+}
+
+/* Layout classes */
+.w-100 {
+  width: 100%;
+}
+
+.w-md-75 {
+  width: 100%;
+}
+
+.w-md-25 {
+  width: 100%;
+}
+
+@media (min-width: 960px) {
+  .w-md-75 {
+    width: 75%;
+  }
+
+  .w-md-25 {
+    width: 25%;
+  }
+}
+
+/* Dialog responsiveness */
+@media (max-width: 600px) {
+  :deep(.v-card-title) {
+    font-size: 1.25rem !important;
+  }
+
+  :deep(.v-dialog) {
+    width: 95% !important;
+    margin: 0 !important;
+  }
 }
 </style>

@@ -19,7 +19,7 @@
         offset-x="8"
         offset-y="8"
       >
-        <v-icon>mdi-bell</v-icon>
+        <v-icon size="28">mdi-bell</v-icon>
       </v-badge>
     </v-btn>
 
@@ -29,7 +29,8 @@
       transition="slide-y-transition"
       offset-y
       max-width="400"
-      min-width="350"
+      min-width="300"
+      :width="$vuetify.display.xs ? '90vw' : '350px'"
       left
       top
       location="bottom"
@@ -39,20 +40,21 @@
       </template>
 
       <v-card class="notification-panel">
-        <v-card-title class="d-flex align-center justify-space-between px-4 pb-0">
-          <h6 class="text-h6">Notifications</h6>
+        <v-card-title class="d-flex align-center justify-space-between px-4 py-3">
+          <h6 class="text-h6 mb-0">Notifications</h6>
           <v-btn
             v-if="hasUnreadNotifications"
             variant="text"
             size="small"
             color="primary"
             @click="handleMarkAllAsRead"
+            class="ml-2"
           >
             Mark all as read
           </v-btn>
         </v-card-title>
 
-        <v-divider class="mt-2"></v-divider>
+        <v-divider class="mt-0"></v-divider>
 
         <v-card-text class="notification-list pa-0">
           <v-list lines="two">
@@ -79,6 +81,7 @@
                 v-gsap-fade-in="{ delay: index * 0.1 }"
                 :class="{ 'unread-notification': !notification.is_read }"
                 @click="handleNotificationClick(notification)"
+                class="notification-item"
               >
                 <template v-slot:prepend>
                   <v-icon :icon="getIconForType(notification.type)" :color="getColorForType(notification.type)" class="me-3"></v-icon>
@@ -111,6 +114,7 @@
             @click="viewAllNotifications"
             block
             v-gsap-hover="{ scale: 1.05 }"
+            class="view-all-btn"
           >
             View All Notifications
           </v-btn>
@@ -238,26 +242,46 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.notification-bell-wrapper {
-  position: relative;
+.user-menu {
+  overflow: hidden;
 }
 
 .notification-bell {
-  position: relative;
-  z-index: 1;
+  // Increase touch target for mobile
+  height: 48px !important;
+  width: 48px !important;
+  min-width: 48px !important;
 }
 
-.notification-panel {
-  max-height: 400px;
-  overflow-y: auto;
+.notification-item {
+  // Better touch area for notification items
+  min-height: 64px;
+  padding: 12px 16px;
+
+  // Better handling of long text
+  :deep(.v-list-item-title) {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  :deep(.v-list-item-subtitle) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+  }
 }
 
-.notification-list {
-  max-height: 300px;
-  overflow-y: auto;
+.view-all-btn {
+  min-height: 48px; // Larger touch target for mobile
 }
 
 .unread-notification {
-  background-color: rgba(var(--v-theme-primary), 0.04);
+  background-color: rgba(var(--v-theme-primary), 0.05);
 }
 </style>
