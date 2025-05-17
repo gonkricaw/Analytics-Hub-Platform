@@ -9,15 +9,19 @@
       interval="5000"
     >
       <v-carousel-item
-        v-for="(slide, i) in slides"
+        v-for="(slide, i) in carouselSlides"
         :key="i"
         :src="slide.src"
         cover
         v-gsap-fade-in="{ delay: i * 0.2 }"
       >
         <div class="carousel-caption d-flex flex-column align-center justify-center">
-          <h2 class="text-h4 font-weight-bold mb-4">{{ slide.title }}</h2>
-          <p class="text-subtitle-1">{{ slide.text }}</p>
+          <h2 class="text-h4 font-weight-bold mb-4" v-gsap-fade-in="{ delay: 0.3 + (i * 0.1) }">
+            {{ slide.title }}
+          </h2>
+          <p class="text-subtitle-1" v-gsap-fade-in="{ delay: 0.5 + (i * 0.1) }">
+            {{ slide.text }}
+          </p>
         </div>
       </v-carousel-item>
     </v-carousel>
@@ -25,27 +29,29 @@
 </template>
 
 <script>
+import { useDashboardStore } from '@/stores/dashboardStore';
+import { computed, onMounted } from 'vue';
+import gsap from 'gsap';
+
 export default {
   name: 'JumbotronCarousel',
-  data() {
+
+  setup() {
+    const dashboardStore = useDashboardStore();
+    const carouselSlides = computed(() => dashboardStore.carouselSlides);
+
+    onMounted(() => {
+      // Apply additional animations if needed
+      gsap.from('.jumbotron-carousel', {
+        opacity: 0,
+        y: 20,
+        duration: 0.8,
+        ease: 'power2.out'
+      });
+    });
+
     return {
-      slides: [
-        {
-          src: 'https://picsum.photos/1920/300?random=1',
-          title: 'Welcome to Indonet Analytics Hub',
-          text: 'Your central platform for analytics and insights'
-        },
-        {
-          src: 'https://picsum.photos/1920/300?random=2',
-          title: 'Powerful Data Visualization',
-          text: 'Transform your data into meaningful insights'
-        },
-        {
-          src: 'https://picsum.photos/1920/300?random=3',
-          title: 'Stay Updated',
-          text: 'Get real-time updates and notifications'
-        }
-      ]
+      carouselSlides
     };
   }
 };

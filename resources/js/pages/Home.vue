@@ -1,7 +1,14 @@
 <!-- resources/js/pages/Home.vue -->
 <template>
   <DefaultLayout>
-    <v-container fluid>
+    <v-container fluid class="home-container">
+      <!-- Announcements Marquee -->
+      <v-row>
+        <v-col cols="12">
+          <MarqueeText :announcements="announcements" v-gsap-fade-in="{ duration: 0.8 }" />
+        </v-col>
+      </v-row>
+
       <!-- Jumbotron and Digital Clock Section -->
       <v-row>
         <v-col cols="12" md="9">
@@ -16,7 +23,7 @@
       <v-row>
         <v-col cols="12">
           <v-card class="mb-4" elevation="2" v-gsap-fade-in="{ duration: 0.8, delay: 0.4 }">
-            <v-card-title class="primary text-h5 white--text">
+            <v-card-title class="primary text-h5 text-white">
               Welcome to Indonet Analytics Hub
             </v-card-title>
             <v-card-text class="pa-4">
@@ -29,22 +36,32 @@
         </v-col>
       </v-row>
 
-      <!-- Widgets Row -->
+      <!-- Analytics Widgets -->
+      <h2 class="text-h6 mb-3" v-gsap-fade-in="{ duration: 0.8, delay: 0.6 }">
+        <v-icon icon="mdi-chart-box" class="mr-2" color="primary"></v-icon>
+        Dashboard Analytics
+      </h2>
+
+      <!-- Top Row Widgets -->
       <v-row>
-        <!-- Will be populated with actual widgets in Phase 2 -->
-        <v-col v-for="i in 4" :key="i" cols="12" md="3" sm="6">
-          <v-card
-            class="mb-4 widget-card"
-            elevation="2"
-            height="200"
-            v-gsap-hover="{ scale: 1.05 }"
-            v-gsap-fade-in="{ duration: 0.8, delay: 0.4 + (i * 0.1) }"
-          >
-            <v-card-title>Widget {{ i }}</v-card-title>
-            <v-card-text>
-              This is a placeholder for the analytics widgets that will be implemented in Phase 2.
-            </v-card-text>
-          </v-card>
+        <v-col cols="12" md="6" lg="3">
+          <TopOnlineUsersWidget class="mb-4" v-gsap-fade-in="{ duration: 0.8, delay: 0.7 }" />
+        </v-col>
+        <v-col cols="12" md="6" lg="3">
+          <FrequentlyLoginUsersWidget class="mb-4" v-gsap-fade-in="{ duration: 0.8, delay: 0.8 }" />
+        </v-col>
+        <v-col cols="12" md="6" lg="3">
+          <LatestNotificationsWidget class="mb-4" v-gsap-fade-in="{ duration: 0.8, delay: 0.9 }" />
+        </v-col>
+        <v-col cols="12" md="6" lg="3">
+          <PopularMenusWidget class="mb-4" v-gsap-fade-in="{ duration: 0.8, delay: 1.0 }" />
+        </v-col>
+      </v-row>
+
+      <!-- Chart Widget -->
+      <v-row>
+        <v-col cols="12">
+          <LoginChartWidget v-gsap-fade-in="{ duration: 0.8, delay: 1.1 }" />
         </v-col>
       </v-row>
     </v-container>
@@ -52,26 +69,64 @@
 </template>
 
 <script>
+import { onMounted, onUnmounted, computed } from 'vue';
+import { mapState, mapActions } from 'pinia';
+import { useDashboardStore } from '@/stores/dashboardStore';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import JumbotronCarousel from '@/components/JumbotronCarousel.vue';
 import DigitalClock from '@/components/DigitalClock.vue';
+import MarqueeText from '@/components/MarqueeText.vue';
+import TopOnlineUsersWidget from '@/components/widgets/TopOnlineUsersWidget.vue';
+import FrequentlyLoginUsersWidget from '@/components/widgets/FrequentlyLoginUsersWidget.vue';
+import LatestNotificationsWidget from '@/components/widgets/LatestNotificationsWidget.vue';
+import LoginChartWidget from '@/components/widgets/LoginChartWidget.vue';
+import PopularMenusWidget from '@/components/widgets/PopularMenusWidget.vue';
 
 export default {
   name: 'HomePage',
   components: {
     DefaultLayout,
     JumbotronCarousel,
-    DigitalClock
+    DigitalClock,
+    MarqueeText,
+    TopOnlineUsersWidget,
+    FrequentlyLoginUsersWidget,
+    LatestNotificationsWidget,
+    LoginChartWidget,
+    PopularMenusWidget
+  },
+
+  setup() {
+    const dashboardStore = useDashboardStore();
+    let refreshInterval = null;
+
+    // Fetch dashboard data when component mounts
+    onMounted(() => {
+      dashboardStore.fetchDashboardData();
+
+      // Refresh dashboard data every 5 minutes
+      refreshInterval = setInterval(() => {
+        dashboardStore.fetchDashboardData();
+      }, 5 * 60 * 1000);
+    });
+
+    // Clean up interval when component unmounts
+    onUnmounted(() => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    });
+
+    return {
+      // Map state from dashboard store
+      ...mapState(useDashboardStore, ['announcements'])
+    };
   }
 };
 </script>
 
 <style lang="scss" scoped>
-.widget-card {
-  transition: transform 0.3s ease;
-
-  &:hover {
-    transform: translateY(-5px);
-  }
+.home-container {
+  padding-bottom: 24px;
 }
 </style>
