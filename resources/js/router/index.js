@@ -56,6 +56,12 @@ const routes = [
     component: () => import('@/views/EmbedView.vue'),
     meta: { requiresAuth: true, layout: 'blank' }
   },
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: () => import('@/views/NotificationListView.vue'),
+    meta: { requiresAuth: true, title: 'Notifications' }
+  },
   // Development routes
   {
     path: '/dev/component-showcase',

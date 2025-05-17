@@ -5,7 +5,7 @@
     <v-app-bar app color="primary" elevation="1" fixed>
       <!-- Logo and title -->
       <v-avatar class="mr-3" size="36">
-        <img src="@assets/images/logo.png" alt="Indonet Analytics Hub" />
+        <img src="/images/logo.png" alt="Indonet Analytics Hub" />
       </v-avatar>
       <v-app-bar-title class="text-white font-weight-bold">
         Indonet Analytics Hub
@@ -18,23 +18,8 @@
 
       <v-spacer></v-spacer>
 
-      <!-- Notification Bell with badge and pulse animation -->
-      <v-btn icon class="notification-bell mr-2" v-gsap-pulse="{
-        duration: 2,
-        scale: 1.1,
-        active: hasUnreadNotifications
-      }" @click="openNotifications">
-        <v-badge
-          :content="unreadNotificationCount"
-          :value="unreadNotificationCount > 0"
-          color="error"
-          dot-color="error"
-          offset-x="8"
-          offset-y="8"
-        >
-          <v-icon>mdi-bell</v-icon>
-        </v-badge>
-      </v-btn>
+      <!-- Notification Bell Component -->
+      <NotificationBell class="mr-2" />
 
       <!-- User Menu -->
       <v-menu transition="slide-y-transition" :close-on-content-click="false">
@@ -100,35 +85,27 @@ import { useNotificationStore } from '@stores/notificationStore';
 import { useSystemConfigStore } from '@stores/systemConfigStore';
 import gsap from 'gsap';
 import DynamicMenu from '@components/DynamicMenu.vue';
+import NotificationBell from '@components/NotificationBell.vue';
 
 export default {
   name: 'MainLayout',
 
   components: {
-    DynamicMenu
+    DynamicMenu,
+    NotificationBell
   },
 
   computed: {
     ...mapState(useAuthStore, ['user', 'isAuthenticated']),
-    ...mapState(useNotificationStore, ['unreadNotificationCount']),
     ...mapState(useSystemConfigStore, ['footerText']),
 
     userDisplayName() {
       return this.user?.name || 'Guest';
-    },
-
-    hasUnreadNotifications() {
-      return this.unreadNotificationCount > 0;
     }
   },
 
   methods: {
     ...mapActions(useAuthStore, ['logout']),
-    ...mapActions(useNotificationStore, ['openNotificationPanel']),
-
-    openNotifications() {
-      this.openNotificationPanel();
-    },
 
     // GSAP Animations for page transitions
     onEnter(el, done) {
@@ -148,16 +125,23 @@ export default {
         onComplete: done
       });
     }
+  },
+
+  mounted() {
+    // Start notification polling when layout is mounted
+    const notificationStore = useNotificationStore();
+    notificationStore.startNotificationPolling();
+  },
+
+  beforeUnmount() {
+    // Stop notification polling when layout is unmounted
+    const notificationStore = useNotificationStore();
+    notificationStore.stopNotificationPolling();
   }
 };
 </script>
 
 <style lang="scss" scoped>
-.notification-bell {
-  position: relative;
-  z-index: 1;
-}
-
 .user-menu {
   overflow: hidden;
 }
