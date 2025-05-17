@@ -315,9 +315,17 @@ class UserController extends Controller
                 }
             }
 
-            // Send invitation email with temporary password
+            // Send invitation email with temporary password using EmailService
             try {
-                \Mail::to($user->email)->send(new \App\Mail\UserInvitation($user, $tempPassword));
+                $emailService = app(\App\Services\EmailService::class);
+                $emailSent = $emailService->sendWelcomeEmail($user);
+
+                if (!$emailSent) {
+                    \Log::error('Failed to send invitation email through EmailService');
+
+                    // Fallback to traditional mail sending
+                    \Mail::to($user->email)->send(new \App\Mail\UserInvitation($user, $tempPassword));
+                }
             } catch (\Exception $mailException) {
                 // Log the error but continue with the invitation process
                 \Log::error('Failed to send invitation email: ' . $mailException->getMessage());

@@ -265,9 +265,17 @@ class AuthController extends Controller
             // Generate reset token
             $token = Password::createToken($user);
 
-            // Send email with reset link
+            // Send email with reset link using EmailService
             try {
-                \Mail::to($user->email)->send(new \App\Mail\PasswordReset($user->email, $token));
+                $emailService = app(\App\Services\EmailService::class);
+                $emailSent = $emailService->sendPasswordResetEmail($user, $token);
+
+                if (!$emailSent) {
+                    \Log::error('Failed to send password reset email through EmailService');
+
+                    // Fallback to traditional mail sending
+                    \Mail::to($user->email)->send(new \App\Mail\PasswordReset($user->email, $token));
+                }
             } catch (\Exception $mailException) {
                 \Log::error('Failed to send password reset email: ' . $mailException->getMessage());
 
@@ -357,12 +365,19 @@ class AuthController extends Controller
                 ], 200);
             }
 
+            $now = now();
+
             // Record acceptance
             $user->acceptedTerms()->attach($termId, [
-                'accepted_at' => now(),
+                'accepted_at' => $now,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent()
             ]);
+
+            // Get the terms and send confirmation email
+            $terms = \App\Models\TermAndCondition::find($termId);
+            $emailService = app(\App\Services\EmailService::class);
+            $emailService->sendTermsAcceptanceEmail($user, $terms, $now->format('Y-m-d H:i:s'));
 
             return response()->json([
                 'message' => 'Terms and conditions accepted'

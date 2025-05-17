@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\EmailTemplate;
+use App\Models\TermAndCondition;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,23 +12,30 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class PasswordReset extends Mailable implements ShouldQueue
+class TermsAcceptanceConfirmation extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     /**
-     * The user email.
+     * The user instance.
      *
-     * @var string
+     * @var \App\Models\User
      */
-    public $email;
+    public $user;
 
     /**
-     * The reset token.
+     * The terms and conditions instance.
+     *
+     * @var \App\Models\TermAndCondition
+     */
+    public $terms;
+
+    /**
+     * The acceptance date.
      *
      * @var string
      */
-    public $token;
+    public $acceptanceDate;
 
     /**
      * The parsed email template.
@@ -39,26 +47,22 @@ class PasswordReset extends Mailable implements ShouldQueue
     /**
      * Create a new message instance.
      */
-    public function __construct(string $email, string $token)
+    public function __construct(User $user, TermAndCondition $terms, string $acceptanceDate)
     {
-        $this->email = $email;
-        $this->token = $token;
-
-        // Get user data if available
-        $user = User::where('email', $email)->first();
-        $name = $user ? $user->name : 'User';
+        $this->user = $user;
+        $this->terms = $terms;
+        $this->acceptanceDate = $acceptanceDate;
 
         // Parse the email template
-        $template = EmailTemplate::where('slug', 'password-reset')
+        $template = EmailTemplate::where('slug', 'terms-acceptance')
                              ->where('is_active', true)
                              ->first();
 
         if ($template) {
-            $resetUrl = url('/auth/reset-password/' . $token . '?email=' . urlencode($email));
-
             $data = [
-                'name' => $name,
-                'reset_url' => $resetUrl,
+                'name' => $user->name,
+                'acceptance_date' => $acceptanceDate,
+                'terms_version' => $terms->version,
                 'year' => date('Y')
             ];
 
@@ -72,7 +76,7 @@ class PasswordReset extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->parsedTemplate['subject'] ?? 'Reset Your Password - Indonet Analytics Hub',
+            subject: $this->parsedTemplate['subject'] ?? 'Terms and Conditions Acceptance Confirmation',
         );
     }
 
@@ -88,9 +92,15 @@ class PasswordReset extends Mailable implements ShouldQueue
             );
         }
 
-        // Fallback to the blade template
+        // Fallback to a simple text version
         return new Content(
-            view: 'emails.password-reset',
+            htmlString: '
+            <h1>Terms and Conditions Acceptance</h1>
+            <p>Hello ' . $this->user->name . ',</p>
+            <p>This email confirms that you have accepted the Terms and Conditions for the Indonet Analytics Hub Platform on ' . $this->acceptanceDate . '.</p>
+            <p>Terms and Conditions Version: ' . $this->terms->version . '</p>
+            <p>If you did not perform this action, please contact our support team immediately.</p>
+            '
         );
     }
 

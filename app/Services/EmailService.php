@@ -132,6 +132,19 @@ class EmailService
             'terms_version' => $terms->version
         ];
 
-        return $this->sendTemplateEmail('terms-acceptance', $user->email, $data);
+        $emailSent = $this->sendTemplateEmail('terms-acceptance', $user->email, $data);
+
+        if (!$emailSent) {
+            // Fallback to sending via Mailable directly
+            try {
+                \Mail::to($user->email)->send(new \App\Mail\TermsAcceptanceConfirmation($user, $terms, $acceptanceDate));
+                return true;
+            } catch (\Exception $e) {
+                \Log::error('Failed to send terms acceptance email via fallback method: ' . $e->getMessage());
+                return false;
+            }
+        }
+
+        return $emailSent;
     }
 }
