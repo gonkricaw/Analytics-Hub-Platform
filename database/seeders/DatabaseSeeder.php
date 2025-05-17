@@ -54,5 +54,8 @@ class DatabaseSeeder extends Seeder
 
         // Create sample embedded URLs
         $this->call(EmbeddedUrlSeeder::class);
+
+        // Create sample system notifications
+        $this->call(SystemNotificationSeeder::class);
     }
 }

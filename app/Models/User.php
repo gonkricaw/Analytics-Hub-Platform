@@ -138,10 +138,27 @@ class User extends Authenticatable
     }
 
     /**
-     * The notifications that belong to the user.
+     * The notifications directly assigned to the user.
      */
     public function notifications()
     {
         return $this->hasMany(SystemNotification::class);
+    }
+
+    /**
+     * The user notifications junction model.
+     */
+    public function userNotifications()
+    {
+        return $this->hasMany(UserNotification::class);
+    }
+
+    /**
+     * Get all notifications for the user including global ones.
+     */
+    public function allNotifications()
+    {
+        return SystemNotification::forUser($this)
+                                 ->orderBy('created_at', 'desc');
     }
 }

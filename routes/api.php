@@ -123,5 +123,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Embedded URLs Management (Admin)
         Route::apiResource('embed', \App\Http\Controllers\API\EmbedController::class)->except('show');
+
+        // Notification Management (Admin)
+        Route::apiResource('notifications', \App\Http\Controllers\API\Admin\NotificationController::class);
+        Route::get('/notification-statistics', [\App\Http\Controllers\API\Admin\NotificationController::class, 'getStatistics']);
     });
 });
