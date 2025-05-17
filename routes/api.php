@@ -16,10 +16,15 @@ use Illuminate\Support\Facades\Route;
 
 // Authentication routes
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [\App\Http\Controllers\API\AuthController::class, 'login']);
+    // Rate limited auth endpoints - 5 attempts per minute
+    Route::middleware(['throttle:5,1'])->group(function () {
+        Route::post('/login', [\App\Http\Controllers\API\AuthController::class, 'login']);
+        Route::post('/forgot-password', [\App\Http\Controllers\API\AuthController::class, 'forgotPassword']);
+        Route::post('/reset-password', [\App\Http\Controllers\API\AuthController::class, 'resetPassword']);
+    });
+
+    // Standard auth endpoints
     Route::post('/register', [\App\Http\Controllers\API\AuthController::class, 'register']);
-    Route::post('/forgot-password', [\App\Http\Controllers\API\AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [\App\Http\Controllers\API\AuthController::class, 'resetPassword']);
 
     // Protected auth routes
     Route::middleware(['auth:sanctum'])->group(function () {

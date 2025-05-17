@@ -121,27 +121,12 @@ class AuthController extends Controller
     /**
      * Register a new user
      *
-     * @param Request $request
+     * @param \App\Http\Requests\RegisterRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function register(Request $request)
+    public function register(\App\Http\Requests\RegisterRequest $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8|confirmed',
-                'department' => 'nullable|string|max:255',
-                'position' => 'nullable|string|max:255',
-                'phone' => 'nullable|string|max:20',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
 
             $user = User::create([
                 'name' => $request->name,
