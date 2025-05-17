@@ -4,12 +4,15 @@ import { defineStore } from 'pinia';
 export const useLayoutStore = defineStore('layout', {
   state: () => ({
     isLoading: false,
+    loadingCounter: 0,
     showSnackbar: false,
     snackbarText: '',
     snackbarColor: 'success', // success, error, info, warning
     snackbarTimeout: 5000,
     windowWidth: window.innerWidth,
     windowHeight: window.innerHeight,
+    currentPage: null,
+    currentPageTitle: '',
   }),
 
   getters: {
@@ -27,10 +30,20 @@ export const useLayoutStore = defineStore('layout', {
 
   actions: {
     startLoading() {
+      this.loadingCounter++;
       this.isLoading = true;
     },
 
     stopLoading() {
+      this.loadingCounter--;
+      if (this.loadingCounter <= 0) {
+        this.loadingCounter = 0;
+        this.isLoading = false;
+      }
+    },
+
+    resetLoading() {
+      this.loadingCounter = 0;
       this.isLoading = false;
     },
 

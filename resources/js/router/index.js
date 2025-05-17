@@ -62,6 +62,19 @@ const routes = [
     component: () => import('@/views/NotificationListView.vue'),
     meta: { requiresAuth: true, title: 'Notifications' }
   },
+  // Component Showcase (Development Only)
+  {
+    path: '/dev/component-showcase',
+    name: 'component-showcase',
+    component: () => import('@/views/dev/ComponentShowcaseView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresPermission: 'admin',
+      title: 'Component Showcase',
+      devOnly: true
+    }
+  },
+
   // Admin routes
   {
     path: '/admin/users',
@@ -127,7 +140,8 @@ router.beforeEach((to, from, next) => {
   const isDevelopmentRoute = to.matched.some(record => record.meta.development);
 
   // Check if development routes should be accessible
-  if (isDevelopmentRoute && process.env.NODE_ENV !== 'development') {
+  const isDevOnly = to.matched.some(record => record.meta.devOnly);
+  if ((isDevelopmentRoute || isDevOnly) && process.env.NODE_ENV !== 'development') {
     next({ name: 'home' });
     return;
   }

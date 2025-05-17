@@ -73,7 +73,11 @@
     <v-main>
       <!-- Page content -->
       <slot>
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition name="page-transition" mode="out-in" @enter="onEnter" @leave="onLeave">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </slot>
     </v-main>
 
@@ -106,6 +110,39 @@ export default {
     logout() {
       // Logout logic will be implemented in Phase 2
       console.log('Logout clicked');
+    },
+
+    // GSAP Page Transition Animations
+    onEnter(el, done) {
+      const gsap = this.$gsap;
+      gsap.fromTo(
+        el,
+        {
+          opacity: 0,
+          y: 20,
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: 'power3.out',
+          onComplete: done
+        }
+      );
+    },
+
+    onLeave(el, done) {
+      const gsap = this.$gsap;
+      gsap.to(
+        el,
+        {
+          opacity: 0,
+          y: -20,
+          duration: 0.3,
+          ease: 'power2.in',
+          onComplete: done
+        }
+      );
     }
   }
 };
