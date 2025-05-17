@@ -81,6 +81,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Menu Management
     Route::apiResource('menu-items', \App\Http\Controllers\API\MenuItemController::class);
     Route::get('/menu/structure', [\App\Http\Controllers\API\MenuItemController::class, 'getMenuStructure']);
+    Route::post('/menu/track-click', [\App\Http\Controllers\API\MenuController::class, 'trackMenuClick']);
+    Route::get('/menu/popular', [\App\Http\Controllers\API\MenuItemController::class, 'getPopularMenuItems']);
     Route::post('/menu-items/reorder', [\App\Http\Controllers\API\MenuItemController::class, 'reorderItems']);
 
     // Role & Permission Management
@@ -108,6 +110,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Menu Management
     Route::get('/menu', [\App\Http\Controllers\API\MenuController::class, 'index']);
+    Route::get('/menu/structure', [\App\Http\Controllers\API\MenuItemController::class, 'getMenuStructure']);
+    Route::post('/menu/track-click', [\App\Http\Controllers\API\MenuController::class, 'trackMenuClick']);
 
     // Content Management
     Route::get('/content/{slug}', [\App\Http\Controllers\API\ContentController::class, 'show']);

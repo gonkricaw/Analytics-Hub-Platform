@@ -311,6 +311,32 @@ class MenuItemController extends Controller
     }
 
     /**
+     * Get most popular menu items based on analytics.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPopularMenuItems(Request $request)
+    {
+        try {
+            $limit = $request->input('limit', 5);
+
+            // Use the analytics model to get popular items
+            $popularItems = \App\Models\MenuAnalytics::getMostPopularMenuItems($limit);
+
+            return response()->json([
+                'success' => true,
+                'popular_menu_items' => $popularItems
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to retrieve popular menu items',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Reorder menu items.
      *
      * @param  \Illuminate\Http\Request  $request

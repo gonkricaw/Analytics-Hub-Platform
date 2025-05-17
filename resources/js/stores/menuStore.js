@@ -1,16 +1,31 @@
 // resources/js/stores/menuStore.js
 import { defineStore } from 'pinia';
-import axios from '@plugins/axios';
+import menuService from '../services/menuService';
 import { useLayoutStore } from './layoutStore';
 
 export const useMenuStore = defineStore('menu', {
   state: () => ({
     menus: [],
     isLoading: false,
-    error: null,
+    error: null
   }),
 
+  getters: {
+    /**
+     * Get main navigation menu items
+     */
+    navigationMenus: (state) => state.menus || [],
+
+    /**
+     * Check if menus are loaded
+     */
+    hasMenus: (state) => state.menus.length > 0
+  },
+
   actions: {
+    /**
+     * Fetch menu structure from the API
+     */
     async fetchMenus() {
       const layoutStore = useLayoutStore();
 
@@ -18,11 +33,17 @@ export const useMenuStore = defineStore('menu', {
         this.isLoading = true;
         layoutStore.startLoading();
 
-        // Get menus from API - this should return a structure with parent/child relationships
-        const response = await axios.get('/api/menu/structure');
+        const response = await menuService.getMenuStructure();
 
-        // Format menu items if needed
-        this.menus = response.data.data || [];
+        if (response.data && response.data.menu) {
+          this.menus = response.data.menu;
+        } else if (response.data && response.data.data) {
+          // Alternative response format
+          this.menus = response.data.data;
+        } else {
+          // Fallback to empty array if no data
+          this.menus = [];
+        }
 
         return this.menus;
       } catch (error) {
@@ -35,18 +56,44 @@ export const useMenuStore = defineStore('menu', {
       }
     },
 
-    // Track menu clicks for popularity metrics
+    /**
+     * Track menu item click for analytics/popularity
+     * @param {Number} menuId - ID of the clicked menu
+     */
     trackMenuClick(menuId) {
       try {
-        // This would typically send an API request to track the click
-        // For now we'll just implement logging
-        console.log('Menu click tracked:', menuId);
+        // Send API request to track menu click
+        menuService.trackMenuClick(menuId).catch(error => {
+          console.error('Error tracking menu click:', error);
+        });
       } catch (error) {
         console.error('Error tracking menu click:', error);
       }
     },
 
-    // Clear menu data (for logout)
+    /**
+     * Get popular menu items for dashboards
+     * @param {Number} limit - Maximum number of items to retrieve
+     * @returns {Promise} - Popular menu items
+     */
+    async getPopularMenuItems(limit = 5) {
+      try {
+        const response = await menuService.getPopularMenuItems(limit);
+
+        if (response.data && response.data.popular_menu_items) {
+          return response.data.popular_menu_items;
+        }
+
+        return [];
+      } catch (error) {
+        console.error('Error fetching popular menu items:', error);
+        return [];
+      }
+    },
+
+    /**
+     * Clear menu data (for logout)
+     */
     clearMenus() {
       this.menus = [];
       this.error = null;

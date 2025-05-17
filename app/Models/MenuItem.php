@@ -87,6 +87,14 @@ class MenuItem extends Model
     }
 
     /**
+     * Get the analytics data associated with this menu item.
+     */
+    public function analytics()
+    {
+        return $this->hasMany(MenuAnalytics::class, 'menu_item_id');
+    }
+
+    /**
      * Check if user has permission to see this menu item.
      *
      * @param User $user

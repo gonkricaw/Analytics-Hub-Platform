@@ -41,6 +41,48 @@ class MenuController extends Controller
     }
 
     /**
+     * Track menu item click for analytics
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function trackMenuClick(Request $request)
+    {
+        try {
+            $request->validate([
+                'menu_id' => 'required|exists:menu_items,id'
+            ]);
+
+            $user = Auth::user();
+            $menuId = $request->menu_id;
+
+            // Log the activity
+            \App\Models\UserActivityLog::create([
+                'user_id' => $user->id,
+                'activity_type' => 'menu_access',
+                'activity_details' => 'Accessed menu item',
+                'related_model_type' => \App\Models\MenuItem::class,
+                'related_model_id' => $menuId,
+                'ip_address' => $request->ip()
+            ]);
+
+            // Track menu analytics
+            \App\Models\MenuAnalytics::incrementAccessCount($menuId, $user->id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Menu click tracked successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to track menu click',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Recursively filter child menu items based on permissions.
      *
      * @param  \Illuminate\Support\Collection  $menuItems

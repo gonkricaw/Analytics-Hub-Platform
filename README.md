@@ -38,6 +38,8 @@ The Indonet Analytics Hub Platform is a role-based web application with a Larave
 - Hierarchical menu structure
 - Permission-based menu visibility
 - Drag-and-drop reordering capability
+- Usage analytics tracking for menu interactions
+- Popular menu items reporting
 
 ### Terms and Conditions
 - Version tracking for terms
@@ -53,6 +55,28 @@ The Indonet Analytics Hub Platform is a role-based web application with a Larave
 - Customizable email templates
 - Token-based replacement for variables
 - HTML and plain text versions
+
+## Frontend Features
+
+### Modern UI with Vuetify
+- Responsive design using Vuetify 3 components
+- Dark mode support
+- Custom theming and branding
+
+### State Management
+- Pinia stores for centralized state management
+- Modular store design for scalability
+
+### Dynamic Navigation
+- Multi-level dropdown menu support
+- Permission-based menu rendering
+- Smooth GSAP animations for transitions
+- Menu usage analytics with popularity tracking
+
+### User Interface
+- Profile management with avatar support
+- Form validation and error handling
+- Loading indicators and progress feedback
 
 ## Database Structure
 
@@ -196,6 +220,8 @@ The platform offers a comprehensive RESTful API:
 - PUT /api/menu-items/{id}
 - DELETE /api/menu-items/{id}
 - GET /api/menu/structure
+- POST /api/menu/track-click
+- GET /api/menu/popular
 - POST /api/menu-items/reorder
 
 ## License
