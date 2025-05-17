@@ -29,6 +29,7 @@ class User extends Authenticatable
         'department',
         'last_login_at',
         'last_login_ip',
+        'last_activity_at',
         'is_active',
     ];
 
@@ -51,7 +52,10 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
+            'last_activity_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -160,5 +164,26 @@ class User extends Authenticatable
     {
         return SystemNotification::forUser($this)
                                  ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get the profile picture URL.
+     *
+     * @return string
+     */
+    public function getProfilePictureUrlAttribute()
+    {
+        if (!empty($this->avatar)) {
+            // If avatar is a full URL
+            if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
+                return $this->avatar;
+            }
+
+            // If avatar is a path
+            return url('storage/' . $this->avatar);
+        }
+
+        // Return default avatar if none is set
+        return SystemConfiguration::getConfig('default_profile_picture', url('/images/default-avatar.png'));
     }
 }

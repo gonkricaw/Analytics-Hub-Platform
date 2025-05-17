@@ -112,6 +112,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Embedded URLs
     Route::get('/embed/{uuid}', [\App\Http\Controllers\API\EmbedController::class, 'show']);
 
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\API\DashboardController::class, 'getData']);
+
+    // Public system configurations
+    Route::get('/public-configs', [\App\Http\Controllers\API\SystemConfigurationController::class, 'getPublicConfigs']);
+
     // Admin routes
     Route::middleware(['permission:admin-access'])->prefix('admin')->group(function () {
         // Content Management (Admin)
@@ -127,5 +133,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Notification Management (Admin)
         Route::apiResource('notifications', \App\Http\Controllers\API\Admin\NotificationController::class);
         Route::get('/notification-statistics', [\App\Http\Controllers\API\Admin\NotificationController::class, 'getStatistics']);
+
+        // System Configuration Management (Admin)
+        Route::apiResource('system-config', \App\Http\Controllers\API\Admin\SystemConfigurationController::class);
+        Route::get('/system-config/groups', [\App\Http\Controllers\API\Admin\SystemConfigurationController::class, 'getGroups']);
+        Route::post('/system-config/bulk-update', [\App\Http\Controllers\API\Admin\SystemConfigurationController::class, 'bulkUpdate']);
     });
 });

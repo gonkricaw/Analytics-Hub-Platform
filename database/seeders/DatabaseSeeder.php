@@ -57,5 +57,8 @@ class DatabaseSeeder extends Seeder
 
         // Create sample system notifications
         $this->call(SystemNotificationSeeder::class);
+
+        // Create system configurations
+        $this->call(SystemConfigurationSeeder::class);
     }
 }
